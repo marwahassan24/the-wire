@@ -5,6 +5,12 @@
  * or staging database — surnames stay TESTCLIENT per the brief's hard rule.
  */
 import { pool } from "./db.js";
+import { hashPassword } from "./auth/password.js";
+
+// Dev-only credential shared by all seeded staff accounts, for logging into
+// a local instance. Never used against staging or live — those get real
+// per-person passwords set some other way once auth grows beyond Phase 1.
+const DEV_PASSWORD = "changeme123";
 
 type StaffName = "Jeremy" | "Zoe" | "Louise" | "Sarah";
 
@@ -200,13 +206,15 @@ async function main() {
       RESTART IDENTITY CASCADE
     `);
 
+    const devPasswordHash = await hashPassword(DEV_PASSWORD);
+
     const staffId = new Map<StaffName, number>();
     for (const staff of STAFF) {
       const { rows } = await client.query<{ id: number }>(
         `INSERT INTO users (email, password_hash, name, role, active)
          VALUES ($1, $2, $3, $4, true)
          RETURNING id`,
-        [staff.email, "unset", staff.name, staff.role]
+        [staff.email, devPasswordHash, staff.name, staff.role]
       );
       staffId.set(staff.name, rows[0].id);
     }
@@ -314,6 +322,7 @@ async function main() {
 
     await client.query("COMMIT");
     console.log(`Seeded ${STAFF.length} staff users and ${CLIENTS.length} TESTCLIENT families.`);
+    console.log(`Dev login: any of ${STAFF.map((s) => s.email).join(", ")} / password "${DEV_PASSWORD}"`);
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;
