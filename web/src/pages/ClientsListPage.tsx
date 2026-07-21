@@ -2,13 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { theme as C } from "../theme.js";
 import { api } from "../api.js";
+import { fmtDate } from "../format.js";
 import type { ClientSummary } from "../types.js";
 import { Card, Input, Pill } from "../components/ui.js";
-
-function fmtDate(d: string | null) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-}
 
 export function ClientsListPage() {
   const [clients, setClients] = useState<ClientSummary[] | null>(null);

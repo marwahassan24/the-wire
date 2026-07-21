@@ -2,15 +2,10 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { theme as C } from "../theme.js";
 import { api } from "../api.js";
-import type { ClientSpine } from "../types.js";
+import { fmtDate } from "../format.js";
+import type { ClientSpine, Point } from "../types.js";
 import { Card, Eyebrow, Pill } from "../components/ui.js";
-
-function fmtDate(d: string | null) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-}
-
-const POINT_TONE = { open: "amber", carried: "amber", resolved: "plain" } as const;
+import { PointsSection } from "../components/PointsSection.js";
 
 export function ClientSpinePage() {
   const { id } = useParams<{ id: string }>();
@@ -64,27 +59,11 @@ export function ClientSpinePage() {
           </div>
         </Card>
 
-        <Card>
-          <Eyebrow>2 · Points to note / discuss</Eyebrow>
-          {client.points.length === 0 && <Empty />}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {client.points.map((p) => (
-              <div key={p.id}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                  <span style={{ fontFamily: C.mono, fontSize: 11.5, color: C.inkSoft }}>#{p.number}</span>
-                  <Pill tone={POINT_TONE[p.status]}>{p.status}</Pill>
-                  {p.raised_context && (
-                    <span style={{ fontSize: 11, color: C.inkSoft }}>{p.raised_context}</span>
-                  )}
-                </div>
-                <div style={{ fontSize: 13.5, lineHeight: 1.55 }}>{p.text}</div>
-                {p.resolution_note && (
-                  <div style={{ fontSize: 12.5, color: C.inkSoft, marginTop: 3 }}>↳ {p.resolution_note}</div>
-                )}
-              </div>
-            ))}
-          </div>
-        </Card>
+        <PointsSection
+          clientId={client.id}
+          points={client.points}
+          onChange={(points: Point[]) => setClient({ ...client, points })}
+        />
 
         <Card>
           <Eyebrow>3 · Meeting Note (client-visible)</Eyebrow>
