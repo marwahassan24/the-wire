@@ -1,0 +1,20 @@
+{
+  "name": "the-wire",
+  "private": true,
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "api"
+  ],
+  "scripts": {
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f postgres",
+    "dev:api": "npm run dev --workspace api",
+    "migrate": "npm run migrate --workspace api",
+    "migrate:down": "npm run migrate:down --workspace api",
+    "migrate:create": "npm run migrate:create --workspace api"
+  }
+}

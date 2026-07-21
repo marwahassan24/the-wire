@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+
+# moneyinfo sync output — local artifacts, never committed
+wire-sync-output/
