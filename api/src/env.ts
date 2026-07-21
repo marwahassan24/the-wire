@@ -14,4 +14,5 @@ export const env = {
   NODE_ENV: process.env.NODE_ENV ?? "development",
   PORT: Number(process.env.PORT ?? 3001),
   DATABASE_URL: required("DATABASE_URL"),
+  WEB_ORIGIN: process.env.WEB_ORIGIN ?? "http://localhost:5173",
 };

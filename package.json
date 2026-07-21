@@ -6,13 +6,15 @@
     "node": ">=20"
   },
   "workspaces": [
-    "api"
+    "api",
+    "web"
   ],
   "scripts": {
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
     "dev:api": "npm run dev --workspace api",
+    "dev:web": "npm run dev --workspace web",
     "migrate": "npm run migrate --workspace api",
     "migrate:down": "npm run migrate:down --workspace api",
     "migrate:create": "npm run migrate:create --workspace api",

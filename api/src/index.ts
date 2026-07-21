@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
+import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import { env } from "./env.js";
 import { pool } from "./db.js";
@@ -13,6 +14,7 @@ import portfolioRoutes from "./routes/portfolio.js";
 
 const app = Fastify({ logger: true });
 
+await app.register(cors, { origin: env.WEB_ORIGIN, credentials: true });
 await app.register(cookie);
 await app.register(rateLimit, { global: false });
 await app.register(authPlugin);
