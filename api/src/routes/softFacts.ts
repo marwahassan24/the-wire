@@ -15,6 +15,17 @@ const createSoftFactSchema = {
   },
 };
 
+const patchSoftFactSchema = {
+  body: {
+    type: "object",
+    required: ["text"],
+    properties: {
+      text: { type: "string", minLength: 1 },
+    },
+    additionalProperties: false,
+  },
+};
+
 const softFactsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post("/api/clients/:id/soft-facts", { schema: createSoftFactSchema }, async (request, reply) => {
     const clientId = Number((request.params as { id: string }).id);
@@ -42,6 +53,53 @@ const softFactsRoutes: FastifyPluginAsync = async (fastify) => {
       });
       reply.code(201);
       return created;
+    } catch (err) {
+      const message = friendlyConstraintMessage(err);
+      if (message) {
+        reply.code(400).send({ error: message });
+        return;
+      }
+      throw err;
+    }
+  });
+
+  fastify.patch("/api/soft-facts/:id", { schema: patchSoftFactSchema }, async (request, reply) => {
+    const id = Number((request.params as { id: string }).id);
+    const body = request.body as { text: string };
+    const userId = request.user!.id;
+
+    try {
+      const result = await withTransaction(async (tx) => {
+        const { rows: beforeRows } = await tx.query(
+          `SELECT * FROM soft_facts WHERE id = $1 AND deleted_at IS NULL`,
+          [id]
+        );
+        if (beforeRows.length === 0) return null;
+        const before = beforeRows[0];
+
+        // fact_date is deliberately not editable here — it's the date the
+        // thing happened, not the date it was written down.
+        const { rows: afterRows } = await tx.query(
+          `UPDATE soft_facts SET text = $1 WHERE id = $2 RETURNING *`,
+          [body.text, id]
+        );
+        const after = afterRows[0];
+        await recordAudit(tx, {
+          userId,
+          entityType: "soft_fact",
+          entityId: id,
+          action: "update",
+          before,
+          after,
+        });
+        return after;
+      });
+
+      if (!result) {
+        reply.code(404).send({ error: "Soft fact not found" });
+        return;
+      }
+      return result;
     } catch (err) {
       const message = friendlyConstraintMessage(err);
       if (message) {
