@@ -21,6 +21,7 @@ const loginSchema = {
       email: { type: "string", minLength: 1 },
       password: { type: "string", minLength: 1 },
     },
+    additionalProperties: false,
   },
 };
 

@@ -12,7 +12,14 @@ import pointsRoutes from "./routes/points.js";
 import meetingNotesRoutes from "./routes/meetingNotes.js";
 import portfolioRoutes from "./routes/portfolio.js";
 
-const app = Fastify({ logger: true });
+// Fastify's default ajv config silently strips unknown body/query fields
+// (removeAdditional: true) instead of rejecting them. Turned off so a
+// request with a field a schema doesn't recognise gets a clear 400 instead
+// of the extra field just vanishing without a trace.
+const app = Fastify({
+  logger: true,
+  ajv: { customOptions: { removeAdditional: false } },
+});
 
 await app.register(cors, { origin: env.WEB_ORIGIN, credentials: true });
 await app.register(cookie);
