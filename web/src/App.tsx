@@ -6,6 +6,7 @@ import { LoginPage } from "./pages/LoginPage.js";
 import { ClientsListPage } from "./pages/ClientsListPage.js";
 import { ClientSpinePage } from "./pages/ClientSpinePage.js";
 import { TasksPage } from "./pages/TasksPage.js";
+import { SearchPage } from "./pages/SearchPage.js";
 import { theme as C } from "./theme.js";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -49,6 +50,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <TasksPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/search"
+            element={
+              <RequireAuth>
+                <SearchPage />
               </RequireAuth>
             }
           />

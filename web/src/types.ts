@@ -111,3 +111,14 @@ export interface Case {
   client_first_names: string;
   client_surname: string;
 }
+
+export interface SearchResult {
+  entity_type: "soft_fact" | "point" | "meeting_note" | "portfolio_summary";
+  entity_id: number;
+  client_id: number;
+  client_first_names: string;
+  client_surname: string;
+  excerpt: string;
+  entry_date: string | null;
+  rank: number;
+}
