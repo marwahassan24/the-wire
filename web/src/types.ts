@@ -112,6 +112,21 @@ export interface Case {
   client_surname: string;
 }
 
+export type PrepTask = Omit<Task, "client_first_names" | "client_surname">;
+
+export interface PrepPack extends ClientSummary {
+  points: Point[];
+  recentSoftFacts: SoftFact[];
+  portfolio: {
+    summary: string;
+    updated_by: number | null;
+    updated_at: string | null;
+    recentLogs: PortfolioLogEntry[];
+  };
+  outstandingTasks: PrepTask[];
+  lastMeetingNote: MeetingNote | null;
+}
+
 export interface SearchResult {
   entity_type: "soft_fact" | "point" | "meeting_note" | "portfolio_summary";
   entity_id: number;

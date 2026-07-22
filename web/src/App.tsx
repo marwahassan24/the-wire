@@ -5,6 +5,7 @@ import { Layout } from "./components/Layout.js";
 import { LoginPage } from "./pages/LoginPage.js";
 import { ClientsListPage } from "./pages/ClientsListPage.js";
 import { ClientSpinePage } from "./pages/ClientSpinePage.js";
+import { PrepPage } from "./pages/PrepPage.js";
 import { TasksPage } from "./pages/TasksPage.js";
 import { SearchPage } from "./pages/SearchPage.js";
 import { theme as C } from "./theme.js";
@@ -42,6 +43,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <ClientSpinePage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/clients/:id/prep"
+            element={
+              <RequireAuth>
+                <PrepPage />
               </RequireAuth>
             }
           />

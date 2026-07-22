@@ -31,11 +31,19 @@ export function ClientSpinePage() {
       <Link to="/clients" style={{ fontSize: 12.5, color: C.inkSoft, textDecoration: "none" }}>
         ← Clients
       </Link>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, marginBottom: 4 }}>
-        <div style={{ fontWeight: 700, fontSize: 20 }}>
-          {client.first_names} {client.surname}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+          <div style={{ fontWeight: 700, fontSize: 20 }}>
+            {client.first_names} {client.surname}
+          </div>
+          <Pill tone={client.status === "Working" ? "primary" : "plain"}>{client.status}</Pill>
         </div>
-        <Pill tone={client.status === "Working" ? "primary" : "plain"}>{client.status}</Pill>
+        <Link
+          to={`/clients/${client.id}/prep`}
+          style={{ fontSize: 12.5, color: C.primary, textDecoration: "none", fontWeight: 600 }}
+        >
+          Prep view →
+        </Link>
       </div>
       <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 24 }}>
         {client.review_cycle} cycle

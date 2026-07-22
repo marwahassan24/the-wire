@@ -3,7 +3,7 @@ import { pool, withTransaction } from "../db.js";
 import { recordAudit } from "../audit.js";
 import { friendlyConstraintMessage } from "../dbErrors.js";
 
-const CLIENT_LIST_COLUMNS = `
+export const CLIENT_LIST_COLUMNS = `
   id, moneyinfo_client_id, first_names, surname, dob, dob_2, email, phone,
   status, adviser_id, cm_id, review_cycle, next_review_date, next_review_type,
   last_review_date, version, created_at, updated_at

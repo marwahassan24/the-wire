@@ -14,6 +14,7 @@ import portfolioRoutes from "./routes/portfolio.js";
 import tasksRoutes from "./routes/tasks.js";
 import casesRoutes from "./routes/cases.js";
 import searchRoutes from "./routes/search.js";
+import prepRoutes from "./routes/prep.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   // Fastify's default ajv config silently strips unknown body/query fields
@@ -46,6 +47,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     await protectedRoutes.register(tasksRoutes);
     await protectedRoutes.register(casesRoutes);
     await protectedRoutes.register(searchRoutes);
+    await protectedRoutes.register(prepRoutes);
   });
 
   app.get("/health", async () => {
