@@ -121,9 +121,10 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
       conditions.push(`adviser_id = $${params.length}`);
     }
     if (review_due) {
-      // "Due" = overdue or within the next 30 days. Not specified in the
-      // brief; picked as a reasonable default for what "imminent" means.
-      conditions.push(`next_review_date IS NOT NULL AND next_review_date <= CURRENT_DATE + INTERVAL '30 days'`);
+      // "Due" = overdue or within the next 6 weeks — matches the ops
+      // dashboard's "reviews due soon" window (see ops.ts), taken from
+      // the-wire.jsx's own OpsPage rather than guessed independently.
+      conditions.push(`next_review_date IS NOT NULL AND next_review_date <= CURRENT_DATE + INTERVAL '42 days'`);
     }
 
     const { rows } = await pool.query(

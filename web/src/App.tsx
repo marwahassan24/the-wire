@@ -8,6 +8,7 @@ import { ClientSpinePage } from "./pages/ClientSpinePage.js";
 import { PrepPage } from "./pages/PrepPage.js";
 import { TasksPage } from "./pages/TasksPage.js";
 import { SearchPage } from "./pages/SearchPage.js";
+import { OpsPage } from "./pages/OpsPage.js";
 import { theme as C } from "./theme.js";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -67,6 +68,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <SearchPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/ops"
+            element={
+              <RequireAuth>
+                <OpsPage />
               </RequireAuth>
             }
           />

@@ -33,6 +33,9 @@ export function Layout({ children }: { children: ReactNode }) {
             <Link to="/search" style={{ fontSize: 13, color: C.inkSoft, textDecoration: "none" }}>
               Search
             </Link>
+            <Link to="/ops" style={{ fontSize: 13, color: C.inkSoft, textDecoration: "none" }}>
+              Operations
+            </Link>
           </nav>
         </div>
         {user && (

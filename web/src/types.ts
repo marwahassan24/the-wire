@@ -127,6 +127,59 @@ export interface PrepPack extends ClientSummary {
   lastMeetingNote: MeetingNote | null;
 }
 
+export interface OpsReviewDue {
+  id: number;
+  first_names: string;
+  surname: string;
+  next_review_date: string;
+  next_review_type: "Annual" | "Interim" | "Ad hoc" | null;
+  review_cycle: "Annual" | "Interim" | "Ad hoc";
+  adviser_id: number;
+  adviser_name: string;
+  days_until: number;
+}
+
+export interface OpsCase {
+  id: number;
+  client_id: number;
+  title: string;
+  stage: string;
+  waiting_on: "us" | "client" | "provider" | "third_party" | null;
+  stage_updated_at: string;
+  client_first_names: string;
+  client_surname: string;
+  idle_days: number;
+}
+
+export interface OpsPipelineStage {
+  stage: string;
+  count: number;
+  cases: OpsCase[];
+}
+
+export interface OpsWorkload {
+  id: number;
+  name: string;
+  open_tasks: number;
+  overdue_tasks: number;
+  open_cases: number;
+}
+
+export interface OpsDashboard {
+  stats: {
+    reviewsOverdue: number;
+    reviewsDueSoon: number;
+    reviewsNoDateSet: number;
+    liveCases: number;
+    withProvider: number;
+    withClient: number;
+    stalledCases: number;
+  };
+  reviewsDue: OpsReviewDue[];
+  pipeline: OpsPipelineStage[];
+  workload: OpsWorkload[];
+}
+
 export interface SearchResult {
   entity_type: "soft_fact" | "point" | "meeting_note" | "portfolio_summary";
   entity_id: number;
