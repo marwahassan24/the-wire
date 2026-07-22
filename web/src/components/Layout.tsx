@@ -19,9 +19,19 @@ export function Layout({ children }: { children: ReactNode }) {
           background: C.card,
         }}
       >
-        <Link to="/clients" style={{ textDecoration: "none", color: C.primary, fontWeight: 700, fontSize: 16 }}>
-          The Wire
-        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          <Link to="/clients" style={{ textDecoration: "none", color: C.primary, fontWeight: 700, fontSize: 16 }}>
+            The Wire
+          </Link>
+          <nav style={{ display: "flex", gap: 14 }}>
+            <Link to="/clients" style={{ fontSize: 13, color: C.inkSoft, textDecoration: "none" }}>
+              Clients
+            </Link>
+            <Link to="/tasks" style={{ fontSize: 13, color: C.inkSoft, textDecoration: "none" }}>
+              Tasks
+            </Link>
+          </nav>
+        </div>
         {user && (
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span style={{ fontSize: 13, color: C.inkSoft }}>

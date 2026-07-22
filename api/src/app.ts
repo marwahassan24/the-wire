@@ -11,6 +11,8 @@ import softFactsRoutes from "./routes/softFacts.js";
 import pointsRoutes from "./routes/points.js";
 import meetingNotesRoutes from "./routes/meetingNotes.js";
 import portfolioRoutes from "./routes/portfolio.js";
+import tasksRoutes from "./routes/tasks.js";
+import casesRoutes from "./routes/cases.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   // Fastify's default ajv config silently strips unknown body/query fields
@@ -40,6 +42,8 @@ export async function buildApp(): Promise<FastifyInstance> {
     await protectedRoutes.register(pointsRoutes);
     await protectedRoutes.register(meetingNotesRoutes);
     await protectedRoutes.register(portfolioRoutes);
+    await protectedRoutes.register(tasksRoutes);
+    await protectedRoutes.register(casesRoutes);
   });
 
   app.get("/health", async () => {

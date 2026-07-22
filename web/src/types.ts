@@ -80,3 +80,34 @@ export interface ClientSpine extends ClientSummary {
   meetingNotes: MeetingNote[];
   portfolio: Portfolio;
 }
+
+export interface Task {
+  id: number;
+  client_id: number;
+  text: string;
+  owner_id: number;
+  due_date: string | null;
+  status: "awaiting_sense_check" | "confirmed" | "done";
+  source: "manual" | "meeting_note" | "sync";
+  confirmed_by: number | null;
+  confirmed_at: string | null;
+  created_at: string;
+  client_first_names: string;
+  client_surname: string;
+  owner_name: string;
+}
+
+export interface Case {
+  id: number;
+  client_id: number;
+  title: string;
+  stage: string;
+  waiting_on: "us" | "client" | "provider" | "third_party" | null;
+  owner_id: number | null;
+  opened_at: string;
+  stage_updated_at: string;
+  closed_at: string | null;
+  created_at: string;
+  client_first_names: string;
+  client_surname: string;
+}
