@@ -18,7 +18,7 @@ export function friendlyConstraintMessage(err: unknown): string | null {
     case "23505":
       return "A record with that value already exists.";
     case "23514":
-      return "That change isn't allowed — check the required fields for this status.";
+      return "That change isn't allowed - check the required fields for this status.";
     default:
       return null;
   }

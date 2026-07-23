@@ -44,7 +44,7 @@ export function SearchPage() {
     <div>
       <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 4 }}>Search</div>
       <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 16 }}>
-        Across soft facts, points, meeting notes, and portfolio summaries — every client.
+        Across soft facts, points, meeting notes, and portfolio summaries - every client.
       </div>
 
       <Input

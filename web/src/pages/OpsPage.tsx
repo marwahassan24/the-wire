@@ -28,7 +28,7 @@ function Stat({ n, label, tone }: { n: number; label: string; tone?: string }) {
 
 function reviewPill(daysUntil: number) {
   if (daysUntil < 0) return <Pill tone="red">overdue {Math.abs(daysUntil)}d</Pill>;
-  if (daysUntil <= 14) return <Pill tone="amber">in {daysUntil}d — prep now</Pill>;
+  if (daysUntil <= 14) return <Pill tone="amber">in {daysUntil}d - prep now</Pill>;
   return <Pill tone="plain">in {daysUntil}d</Pill>;
 }
 
@@ -52,7 +52,7 @@ export function OpsPage() {
     <div>
       <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 4 }}>Operations</div>
       <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 20 }}>
-        Reviews, live cases and team load — driven by the same spine, nothing entered twice.
+        Reviews, live cases and team load - driven by the same spine, nothing entered twice.
       </div>
 
       <div
@@ -135,7 +135,7 @@ export function OpsPage() {
               <span>{stage}</span>
               <span>{count}</span>
             </div>
-            {count === 0 && <Empty text="—" />}
+            {count === 0 && <Empty text="-" />}
             {cases.map((k) => (
               <div key={k.id} style={{ borderTop: `1px solid ${C.line}`, paddingTop: 8, marginTop: 8 }}>
                 <Link

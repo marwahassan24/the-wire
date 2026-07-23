@@ -68,7 +68,7 @@ const CLIENTS: SeedClient[] = [
     lastReview: "2026-02-10",
     cases: [
       {
-        title: "Care fee direct debit — confirm provider position",
+        title: "Care fee direct debit - confirm provider position",
         stage: "Provider Processing",
         waiting: "Provider",
         updated: "2026-06-30",
@@ -76,14 +76,14 @@ const CLIENTS: SeedClient[] = [
       },
     ],
     softFacts: [
-      { date: "2026-06-12", text: "Granddaughter Layla born — sister to Isla. Whole family down in Cornwall for two weeks in August." },
-      { date: "2026-05-02", text: "Right shoulder may have gone again — rotator cuff last time. Op possible in autumn." },
+      { date: "2026-06-12", text: "Granddaughter Layla born - sister to Isla. Whole family down in Cornwall for two weeks in August." },
+      { date: "2026-05-02", text: "Right shoulder may have gone again - rotator cuff last time. Op possible in autumn." },
       { date: "2025-11-20", text: "Ferrari put away for winter. Talking about one last continental trip in it next summer." },
     ],
     points: [
-      { num: 1, text: "His dad's care fees may need a DD around March time — still looking likely?", status: "carried", resolution: "Carry forward — forgot to ask at Interim.", from: "Interim, Feb 2026" },
-      { num: 2, text: "Chris using up 20% band with Fidelity income — check if expecting any income from company?", status: "open", resolution: "", from: "Annual, Aug 2025" },
-      { num: 3, text: "Helen's ISA allowance — £14,200 unused this tax year.", status: "open", resolution: "", from: "Prep, Jul 2026" },
+      { num: 1, text: "His dad's care fees may need a DD around March time - still looking likely?", status: "carried", resolution: "Carry forward - forgot to ask at Interim.", from: "Interim, Feb 2026" },
+      { num: 2, text: "Chris using up 20% band with Fidelity income - check if expecting any income from company?", status: "open", resolution: "", from: "Annual, Aug 2025" },
+      { num: 3, text: "Helen's ISA allowance - £14,200 unused this tax year.", status: "open", resolution: "", from: "Prep, Jul 2026" },
     ],
     meetingNotes: [
       {
@@ -93,7 +93,7 @@ const CLIENTS: SeedClient[] = [
       },
     ],
     portfolio: {
-      summary: "Fidelity GIA + ISAs, RJIS discretionary. Cash buffer 18 months' spending. Regular withdrawal £3,500/m from JB GIA. CGT realised YTD £4,100 of £3,000 allowance — watch. Voyant refreshed May 2026.",
+      summary: "Fidelity GIA + ISAs, RJIS discretionary. Cash buffer 18 months' spending. Regular withdrawal £3,500/m from JB GIA. CGT realised YTD £4,100 of £3,000 allowance - watch. Voyant refreshed May 2026.",
       logs: [
         { date: "2026-06-28", text: "£20k withdrawal sent from JB GIA (house fund top-up)." },
         { date: "2026-04-14", text: "ISA subscriptions completed for both, 2026/27." },
@@ -118,7 +118,7 @@ const CLIENTS: SeedClient[] = [
     lastReview: "2025-11-18",
     cases: [
       {
-        title: "Protection review — comparison once salary confirmed",
+        title: "Protection review - comparison once salary confirmed",
         stage: "Research",
         waiting: "Client",
         updated: "2026-06-20",
@@ -126,12 +126,12 @@ const CLIENTS: SeedClient[] = [
       },
     ],
     softFacts: [
-      { date: "2026-05-30", text: "Got the MD role at Marsh — starts September. Big step up, some nerves under the excitement." },
+      { date: "2026-05-30", text: "Got the MD role at Marsh - starts September. Big step up, some nerves under the excitement." },
       { date: "2026-03-15", text: "Training for a half marathon with his brother. Knee holding up so far." },
     ],
     points: [
-      { num: 1, text: "New MD package — share scheme details needed before we can advise on pension headroom.", status: "open", resolution: "", from: "Call, Jun 2026" },
-      { num: 2, text: "Protection review promised last Annual — still outstanding.", status: "carried", resolution: "Carry forward — waiting on new salary confirmation.", from: "Annual, Nov 2025" },
+      { num: 1, text: "New MD package - share scheme details needed before we can advise on pension headroom.", status: "open", resolution: "", from: "Call, Jun 2026" },
+      { num: 2, text: "Protection review promised last Annual - still outstanding.", status: "carried", resolution: "Carry forward - waiting on new salary confirmation.", from: "Annual, Nov 2025" },
     ],
     meetingNotes: [
       {
@@ -141,7 +141,7 @@ const CLIENTS: SeedClient[] = [
       },
     ],
     portfolio: {
-      summary: "Workplace pension + SIPP, S&S ISA maxed 25/26. No GIA. Annual allowance headroom depends on new package — flagged in Points.",
+      summary: "Workplace pension + SIPP, S&S ISA maxed 25/26. No GIA. Annual allowance headroom depends on new package - flagged in Points.",
       logs: [{ date: "2026-04-08", text: "ISA subscription 2026/27 completed." }],
     },
     tasks: [{ text: "Chase share scheme booklet", owner: "Sarah", due: "2026-08-01", status: "confirmed" }],
@@ -160,7 +160,7 @@ const CLIENTS: SeedClient[] = [
     lastReview: "2026-01-22",
     cases: [
       {
-        title: "Gifting options — JISA vs direct",
+        title: "Gifting options - JISA vs direct",
         stage: "Recommendation",
         waiting: "Us",
         updated: "2026-07-15",
@@ -168,27 +168,27 @@ const CLIENTS: SeedClient[] = [
       },
     ],
     softFacts: [
-      { date: "2026-07-01", text: "Sister's health worsening — Margaret is now driving to Norwich most weekends. Sounded tired on the phone." },
-      { date: "2026-02-11", text: "Joined the village choir. First concert in June — 'terrifying and wonderful'." },
+      { date: "2026-07-01", text: "Sister's health worsening - Margaret is now driving to Norwich most weekends. Sounded tired on the phone." },
+      { date: "2026-02-11", text: "Joined the village choir. First concert in June - 'terrifying and wonderful'." },
     ],
     points: [
-      { num: 1, text: "Gifting to grandchildren — wants to 'do something meaningful while I can see them enjoy it'. Explore JISA vs direct gifts.", status: "open", resolution: "", from: "Annual, Jan 2026" },
-      { num: 2, text: "Will last reviewed 2019. LPA in place. Nudge gently — sister situation may make this timely.", status: "open", resolution: "", from: "Prep, Jul 2026" },
+      { num: 1, text: "Gifting to grandchildren - wants to 'do something meaningful while I can see them enjoy it'. Explore JISA vs direct gifts.", status: "open", resolution: "", from: "Annual, Jan 2026" },
+      { num: 2, text: "Will last reviewed 2019. LPA in place. Nudge gently - sister situation may make this timely.", status: "open", resolution: "", from: "Prep, Jul 2026" },
     ],
     meetingNotes: [
       {
         date: "2026-01-22",
         type: "Annual",
-        text: "Overall position\nEverything remains in good order, and Margaret should feel free to say yes to the things she's been hesitating over — the plan has room in it.\n\nFamily gifting\nWe discussed gifting to the grandchildren and agreed to bring worked options to the next meeting rather than rush a decision.\n\nNext steps & actions\nTCFP: prepare gifting options.\nClient: nothing needed — just enjoy the choir.",
+        text: "Overall position\nEverything remains in good order, and Margaret should feel free to say yes to the things she's been hesitating over - the plan has room in it.\n\nFamily gifting\nWe discussed gifting to the grandchildren and agreed to bring worked options to the next meeting rather than rush a decision.\n\nNext steps & actions\nTCFP: prepare gifting options.\nClient: nothing needed - just enjoy the choir.",
       },
     ],
     portfolio: {
-      summary: "RJIS discretionary + cash. Income comfortably covered by pensions; portfolio is legacy-oriented. IHT position reviewed Jan 2026 — within NRB + RNRB with current gifting plan.",
+      summary: "RJIS discretionary + cash. Income comfortably covered by pensions; portfolio is legacy-oriented. IHT position reviewed Jan 2026 - within NRB + RNRB with current gifting plan.",
       logs: [],
     },
     tasks: [
       { text: "Prepare gifting options (JISA vs direct) for Interim", owner: "Jeremy", due: "2026-07-27", status: "confirmed" },
-      { text: "Add sister situation to vulnerability watch-list — sense check with adviser", owner: "Louise", due: "2026-07-22", status: "sense" },
+      { text: "Add sister situation to vulnerability watch-list - sense check with adviser", owner: "Louise", due: "2026-07-22", status: "sense" },
     ],
   },
 ];
