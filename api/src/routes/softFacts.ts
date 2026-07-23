@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { withTransaction } from "../db.js";
 import { recordAudit } from "../audit.js";
 import { friendlyConstraintMessage } from "../dbErrors.js";
+import { normalizeText } from "../textNormalize.js";
 
 const createSoftFactSchema = {
   body: {
@@ -38,7 +39,7 @@ const softFactsRoutes: FastifyPluginAsync = async (fastify) => {
           `INSERT INTO soft_facts (client_id, fact_date, text, author_id)
            VALUES ($1, COALESCE($2, CURRENT_DATE), $3, $4)
            RETURNING id, client_id, fact_date, text, author_id, created_at`,
-          [clientId, body.fact_date ?? null, body.text, userId]
+          [clientId, body.fact_date ?? null, normalizeText(body.text), userId]
         );
         const row = rows[0];
         await recordAudit(tx, {
@@ -81,7 +82,7 @@ const softFactsRoutes: FastifyPluginAsync = async (fastify) => {
         // thing happened, not the date it was written down.
         const { rows: afterRows } = await tx.query(
           `UPDATE soft_facts SET text = $1 WHERE id = $2 RETURNING *`,
-          [body.text, id]
+          [normalizeText(body.text), id]
         );
         const after = afterRows[0];
         await recordAudit(tx, {

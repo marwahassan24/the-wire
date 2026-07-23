@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { pool, withTransaction } from "../db.js";
 import { recordAudit } from "../audit.js";
 import { friendlyConstraintMessage } from "../dbErrors.js";
+import { normalizeText } from "../textNormalize.js";
 
 const TASK_COLUMNS = `
   id, client_id, text, owner_id, due_date, status, source,
@@ -112,7 +113,7 @@ const tasksRoutes: FastifyPluginAsync = async (fastify) => {
            RETURNING ${TASK_COLUMNS}`,
           [
             clientId,
-            body.text,
+            normalizeText(body.text),
             body.owner_id,
             body.due_date ?? null,
             source,
@@ -174,7 +175,7 @@ const tasksRoutes: FastifyPluginAsync = async (fastify) => {
         const fields: string[] = [];
         const values: unknown[] = [];
         if (body.text !== undefined) {
-          values.push(body.text);
+          values.push(normalizeText(body.text));
           fields.push(`text = $${values.length}`);
         }
         if (body.owner_id !== undefined) {

@@ -1,7 +1,15 @@
 // Town Close brand — deep purple primary, vibrant secondary palette.
 // Yellow means "a human is needed here": sense-check states, imminent reviews.
-// Plus Jakarta Sans is a stand-in until the real typeface is confirmed with
-// Martine (per BUILD-BRIEF.md) — do not swap this without that sign-off.
+//
+// Typeface: system-ui, with a proper fallback stack, until the real Town
+// Close typeface is confirmed with Martine (per BUILD-BRIEF.md). This
+// supersedes the earlier Plus Jakarta Sans stand-in — advisers and client
+// managers are in these screens before every meeting, and a system font
+// renders faster and reads calmer than a webfont nobody's signed off on yet.
+//
+// Type scale: body copy is never smaller than 16px, and nothing anywhere
+// drops below 14px. Hierarchy comes from weight and size, not from mono
+// fonts, uppercase, letter-spacing, or hard borders.
 export const theme = {
   paper: "#faf9fd",
   card: "#ffffff",
@@ -19,6 +27,12 @@ export const theme = {
   red: "#a11b1b",
   redSoft: "#f9eeee",
   line: "#e4e0f0",
-  mono: "'SF Mono','Menlo','Consolas',monospace",
-  sans: "'Plus Jakarta Sans','Figtree',-apple-system,'Segoe UI',Roboto,sans-serif",
+  sans: 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  contentWidth: 900,
+  text: {
+    title: 26,
+    heading: 17,
+    body: 16,
+    small: 14,
+  },
 } as const;

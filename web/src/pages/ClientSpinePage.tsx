@@ -4,7 +4,7 @@ import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
 import type { ClientSpine, Point } from "../types.js";
-import { Card, Eyebrow, Pill } from "../components/ui.js";
+import { Card, Pill, SectionHeading } from "../components/ui.js";
 import { PointsSection } from "../components/PointsSection.js";
 
 export function ClientSpinePage() {
@@ -21,47 +21,47 @@ export function ClientSpinePage() {
       .catch(() => setError("Couldn't load this client."));
   }, [id]);
 
-  if (error) return <div style={{ color: C.red, fontSize: 13 }}>{error}</div>;
-  if (!client) return <div style={{ color: C.inkSoft, fontSize: 13 }}>Loading…</div>;
+  if (error) return <div style={{ color: C.red, fontSize: C.text.small }}>{error}</div>;
+  if (!client) return <div style={{ color: C.inkSoft, fontSize: C.text.small }}>Loading…</div>;
 
   const latestNote = client.meetingNotes[0];
 
   return (
     <div>
-      <Link to="/clients" style={{ fontSize: 12.5, color: C.inkSoft, textDecoration: "none" }}>
+      <Link to="/clients" style={{ fontSize: C.text.small, color: C.inkSoft, textDecoration: "none" }}>
         ← Clients
       </Link>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-          <div style={{ fontWeight: 700, fontSize: 20 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ fontWeight: 700, fontSize: C.text.title }}>
             {client.first_names} {client.surname}
           </div>
           <Pill tone={client.status === "Working" ? "primary" : "plain"}>{client.status}</Pill>
         </div>
         <Link
           to={`/clients/${client.id}/prep`}
-          style={{ fontSize: 12.5, color: C.primary, textDecoration: "none", fontWeight: 600 }}
+          style={{ fontSize: C.text.small, color: C.primary, textDecoration: "none", fontWeight: 600 }}
         >
           Prep view →
         </Link>
       </div>
-      <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 24 }}>
+      <div style={{ fontSize: C.text.small, color: C.inkSoft, marginTop: 6, marginBottom: 32 }}>
         {client.review_cycle} cycle
         {client.next_review_date &&
           ` · next ${client.next_review_type ?? "review"} ${fmtDate(client.next_review_date)}`}
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
         <Card>
-          <Eyebrow>1 · Soft facts</Eyebrow>
+          <SectionHeading>1. Soft facts</SectionHeading>
           {client.softFacts.length === 0 && <Empty />}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             {client.softFacts.map((f) => (
               <div key={f.id}>
-                <div style={{ fontSize: 11, color: C.inkSoft, fontFamily: C.mono, marginBottom: 2 }}>
+                <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 4 }}>
                   {fmtDate(f.fact_date)}
                 </div>
-                <div style={{ fontSize: 13.5, lineHeight: 1.55 }}>{f.text}</div>
+                <div style={{ fontSize: C.text.body, lineHeight: 1.6 }}>{f.text}</div>
               </div>
             ))}
           </div>
@@ -74,32 +74,32 @@ export function ClientSpinePage() {
         />
 
         <Card>
-          <Eyebrow>3 · Meeting Note (client-visible)</Eyebrow>
+          <SectionHeading>3. Meeting note (client-visible)</SectionHeading>
           {!latestNote && <Empty />}
           {latestNote && (
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <span style={{ fontSize: 12, color: C.inkSoft }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <span style={{ fontSize: C.text.small, color: C.inkSoft }}>
                   {latestNote.meeting_type} · {fmtDate(latestNote.meeting_date)}
                 </span>
                 <Pill tone={latestNote.status === "approved" ? "primary" : "amber"}>{latestNote.status}</Pill>
               </div>
-              <div style={{ fontSize: 13.5, lineHeight: 1.65, whiteSpace: "pre-wrap" }}>{latestNote.body}</div>
+              <div style={{ fontSize: C.text.body, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{latestNote.body}</div>
             </div>
           )}
         </Card>
 
         <Card>
-          <Eyebrow>4 · Portfolio detail</Eyebrow>
-          <div style={{ fontSize: 13.5, lineHeight: 1.55, marginBottom: client.portfolio.logs.length ? 16 : 0 }}>
+          <SectionHeading>4. Portfolio detail</SectionHeading>
+          <div style={{ fontSize: C.text.body, lineHeight: 1.6, marginBottom: client.portfolio.logs.length ? 20 : 0 }}>
             {client.portfolio.summary || <Empty />}
           </div>
           {client.portfolio.logs.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {client.portfolio.logs.map((l) => (
-                <div key={l.id} style={{ fontSize: 12.5, display: "flex", gap: 10 }}>
-                  <span style={{ fontFamily: C.mono, color: C.inkSoft, flexShrink: 0 }}>{fmtDate(l.entry_date)}</span>
-                  <span>{l.text}</span>
+                <div key={l.id} style={{ fontSize: C.text.small, display: "flex", gap: 12 }}>
+                  <span style={{ color: C.inkSoft, flexShrink: 0 }}>{fmtDate(l.entry_date)}</span>
+                  <span style={{ color: C.ink }}>{l.text}</span>
                 </div>
               ))}
             </div>
@@ -111,5 +111,5 @@ export function ClientSpinePage() {
 }
 
 function Empty() {
-  return <div style={{ fontSize: 12.5, color: C.inkSoft, fontStyle: "italic" }}>Nothing here yet.</div>;
+  return <div style={{ fontSize: C.text.small, color: C.inkSoft }}>Nothing here yet.</div>;
 }

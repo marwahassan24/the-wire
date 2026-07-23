@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { withTransaction } from "../db.js";
 import { recordAudit } from "../audit.js";
 import { friendlyConstraintMessage } from "../dbErrors.js";
+import { normalizeText } from "../textNormalize.js";
 
 const createMeetingNoteSchema = {
   body: {
@@ -42,7 +43,7 @@ const meetingNotesRoutes: FastifyPluginAsync = async (fastify) => {
            VALUES ($1, $2, $3, $4, $5)
            RETURNING id, client_id, meeting_date, meeting_type, body, author_id,
                      status, approved_by, approved_at, created_at`,
-          [clientId, body.meeting_date, body.meeting_type, body.body, userId]
+          [clientId, body.meeting_date, body.meeting_type, normalizeText(body.body), userId]
         );
         const row = rows[0];
         await recordAudit(tx, {
@@ -104,7 +105,7 @@ const meetingNotesRoutes: FastifyPluginAsync = async (fastify) => {
           fields.push(`meeting_type = $${values.length}`);
         }
         if (body.body !== undefined) {
-          values.push(body.body);
+          values.push(normalizeText(body.body));
           fields.push(`body = $${values.length}`);
         }
         if (body.status === "approved") {

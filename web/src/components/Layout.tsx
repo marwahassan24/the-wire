@@ -14,33 +14,33 @@ export function Layout({ children }: { children: ReactNode }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "14px 24px",
+          padding: "18px 32px",
           borderBottom: `1px solid ${C.line}`,
           background: C.card,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-          <Link to="/clients" style={{ textDecoration: "none", color: C.primary, fontWeight: 700, fontSize: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
+          <Link to="/clients" style={{ textDecoration: "none", color: C.primary, fontWeight: 700, fontSize: 18 }}>
             The Wire
           </Link>
-          <nav style={{ display: "flex", gap: 14 }}>
-            <Link to="/clients" style={{ fontSize: 13, color: C.inkSoft, textDecoration: "none" }}>
+          <nav style={{ display: "flex", gap: 20 }}>
+            <Link to="/clients" style={{ fontSize: 15, color: C.inkSoft, textDecoration: "none" }}>
               Clients
             </Link>
-            <Link to="/tasks" style={{ fontSize: 13, color: C.inkSoft, textDecoration: "none" }}>
+            <Link to="/tasks" style={{ fontSize: 15, color: C.inkSoft, textDecoration: "none" }}>
               Tasks
             </Link>
-            <Link to="/search" style={{ fontSize: 13, color: C.inkSoft, textDecoration: "none" }}>
+            <Link to="/search" style={{ fontSize: 15, color: C.inkSoft, textDecoration: "none" }}>
               Search
             </Link>
-            <Link to="/ops" style={{ fontSize: 13, color: C.inkSoft, textDecoration: "none" }}>
+            <Link to="/ops" style={{ fontSize: 15, color: C.inkSoft, textDecoration: "none" }}>
               Operations
             </Link>
           </nav>
         </div>
         {user && (
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 13, color: C.inkSoft }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <span style={{ fontSize: C.text.small, color: C.inkSoft }}>
               {user.name} · {user.role}
             </span>
             <Btn tone="ghost" small onClick={() => void logout()}>
@@ -49,7 +49,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         )}
       </header>
-      <main style={{ maxWidth: 960, margin: "0 auto", padding: "28px 24px" }}>{children}</main>
+      <main style={{ maxWidth: C.contentWidth, margin: "0 auto", padding: "40px 32px" }}>{children}</main>
     </div>
   );
 }

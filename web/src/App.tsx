@@ -16,7 +16,7 @@ function RequireAuth({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div style={{ fontFamily: C.sans, padding: 24, color: C.inkSoft, fontSize: 13 }}>Loading…</div>
+      <div style={{ fontFamily: C.sans, padding: 24, color: C.inkSoft, fontSize: C.text.small }}>Loading…</div>
     );
   }
   if (!user) {

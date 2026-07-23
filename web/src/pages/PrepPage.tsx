@@ -4,7 +4,7 @@ import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
 import type { PrepPack } from "../types.js";
-import { Card, Eyebrow, Pill } from "../components/ui.js";
+import { Card, Pill, SectionHeading } from "../components/ui.js";
 
 const POINT_TONE = { open: "amber", carried: "amber", resolved: "plain" } as const;
 const TASK_STATUS_TONE = { awaiting_sense_check: "amber", confirmed: "primary", done: "plain" } as const;
@@ -28,39 +28,45 @@ export function PrepPage() {
       .catch(() => setError("Couldn't load the prep pack for this client."));
   }, [id]);
 
-  if (error) return <div style={{ color: C.red, fontSize: 13 }}>{error}</div>;
-  if (!prep) return <div style={{ color: C.inkSoft, fontSize: 13 }}>Loading…</div>;
+  if (error) return <div style={{ color: C.red, fontSize: C.text.small }}>{error}</div>;
+  if (!prep) return <div style={{ color: C.inkSoft, fontSize: C.text.small }}>Loading…</div>;
 
   return (
     <div>
-      <Link to={`/clients/${prep.id}`} style={{ fontSize: 12.5, color: C.inkSoft, textDecoration: "none" }}>
+      <Link to={`/clients/${prep.id}`} style={{ fontSize: C.text.small, color: C.inkSoft, textDecoration: "none" }}>
         ← {prep.first_names} {prep.surname}
       </Link>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, marginBottom: 4 }}>
-        <div style={{ fontWeight: 700, fontSize: 20 }}>Prep: {prep.first_names} {prep.surname}</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: C.text.title }}>
+          Prep: {prep.first_names} {prep.surname}
+        </div>
         <Pill tone={prep.status === "Working" ? "primary" : "plain"}>{prep.status}</Pill>
       </div>
-      <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 24 }}>
+      <div style={{ fontSize: C.text.small, color: C.inkSoft, marginTop: 6, marginBottom: 32 }}>
         {prep.review_cycle} cycle
         {prep.next_review_date &&
           ` · next ${prep.next_review_type ?? "review"} ${fmtDate(prep.next_review_date)}`}
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
         <Card>
-          <Eyebrow>Open and carried points</Eyebrow>
+          <SectionHeading>Open and carried points</SectionHeading>
           {prep.points.length === 0 && <Empty />}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             {prep.points.map((p) => (
               <div key={p.id}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                  <span style={{ fontFamily: C.mono, fontSize: 11.5, color: C.inkSoft }}>#{p.number}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <span style={{ fontSize: C.text.small, fontWeight: 600, color: C.inkSoft }}>#{p.number}</span>
                   <Pill tone={POINT_TONE[p.status]}>{p.status}</Pill>
-                  {p.raised_context && <span style={{ fontSize: 11, color: C.inkSoft }}>{p.raised_context}</span>}
+                  {p.raised_context && (
+                    <span style={{ fontSize: C.text.small, color: C.inkSoft }}>{p.raised_context}</span>
+                  )}
                 </div>
-                <div style={{ fontSize: 13.5, lineHeight: 1.55 }}>{p.text}</div>
+                <div style={{ fontSize: C.text.body, lineHeight: 1.6 }}>{p.text}</div>
                 {p.resolution_note && (
-                  <div style={{ fontSize: 12.5, color: C.inkSoft, marginTop: 3 }}>↳ {p.resolution_note}</div>
+                  <div style={{ fontSize: C.text.small, color: C.inkSoft, marginTop: 6 }}>
+                    ↳ {p.resolution_note}
+                  </div>
                 )}
               </div>
             ))}
@@ -68,33 +74,37 @@ export function PrepPage() {
         </Card>
 
         <Card>
-          <Eyebrow>Recent soft facts</Eyebrow>
+          <SectionHeading>Recent soft facts</SectionHeading>
           {prep.recentSoftFacts.length === 0 && <Empty />}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             {prep.recentSoftFacts.map((f) => (
               <div key={f.id}>
-                <div style={{ fontSize: 11, color: C.inkSoft, fontFamily: C.mono, marginBottom: 2 }}>
+                <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 4 }}>
                   {fmtDate(f.fact_date)}
                 </div>
-                <div style={{ fontSize: 13.5, lineHeight: 1.55 }}>{f.text}</div>
+                <div style={{ fontSize: C.text.body, lineHeight: 1.6 }}>{f.text}</div>
               </div>
             ))}
           </div>
         </Card>
 
         <Card>
-          <Eyebrow>Portfolio</Eyebrow>
+          <SectionHeading>Portfolio</SectionHeading>
           <div
-            style={{ fontSize: 13.5, lineHeight: 1.55, marginBottom: prep.portfolio.recentLogs.length ? 16 : 0 }}
+            style={{
+              fontSize: C.text.body,
+              lineHeight: 1.6,
+              marginBottom: prep.portfolio.recentLogs.length ? 20 : 0,
+            }}
           >
             {prep.portfolio.summary || <Empty />}
           </div>
           {prep.portfolio.recentLogs.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {prep.portfolio.recentLogs.map((l) => (
-                <div key={l.id} style={{ fontSize: 12.5, display: "flex", gap: 10 }}>
-                  <span style={{ fontFamily: C.mono, color: C.inkSoft, flexShrink: 0 }}>{fmtDate(l.entry_date)}</span>
-                  <span>{l.text}</span>
+                <div key={l.id} style={{ fontSize: C.text.small, display: "flex", gap: 12 }}>
+                  <span style={{ color: C.inkSoft, flexShrink: 0 }}>{fmtDate(l.entry_date)}</span>
+                  <span style={{ color: C.ink }}>{l.text}</span>
                 </div>
               ))}
             </div>
@@ -102,38 +112,38 @@ export function PrepPage() {
         </Card>
 
         <Card>
-          <Eyebrow>Outstanding tasks</Eyebrow>
+          <SectionHeading>Outstanding tasks</SectionHeading>
           {prep.outstandingTasks.length === 0 && <Empty />}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {prep.outstandingTasks.map((t) => (
               <div key={t.id}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
                   <Pill tone={TASK_STATUS_TONE[t.status]}>{TASK_STATUS_LABEL[t.status]}</Pill>
-                  <span style={{ fontSize: 11.5, color: C.inkSoft }}>
+                  <span style={{ fontSize: C.text.small, color: C.inkSoft }}>
                     {t.owner_name}
                     {t.due_date && ` · due ${fmtDate(t.due_date)}`}
                   </span>
                 </div>
-                <div style={{ fontSize: 13.5 }}>{t.text}</div>
+                <div style={{ fontSize: C.text.body, lineHeight: 1.5 }}>{t.text}</div>
               </div>
             ))}
           </div>
         </Card>
 
         <Card>
-          <Eyebrow>Last Meeting Note</Eyebrow>
+          <SectionHeading>Last meeting note</SectionHeading>
           {!prep.lastMeetingNote && <Empty />}
           {prep.lastMeetingNote && (
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <span style={{ fontSize: 12, color: C.inkSoft }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <span style={{ fontSize: C.text.small, color: C.inkSoft }}>
                   {prep.lastMeetingNote.meeting_type} · {fmtDate(prep.lastMeetingNote.meeting_date)}
                 </span>
                 <Pill tone={prep.lastMeetingNote.status === "approved" ? "primary" : "amber"}>
                   {prep.lastMeetingNote.status}
                 </Pill>
               </div>
-              <div style={{ fontSize: 13.5, lineHeight: 1.65, whiteSpace: "pre-wrap" }}>
+              <div style={{ fontSize: C.text.body, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
                 {prep.lastMeetingNote.body}
               </div>
             </div>
@@ -145,5 +155,5 @@ export function PrepPage() {
 }
 
 function Empty() {
-  return <div style={{ fontSize: 12.5, color: C.inkSoft, fontStyle: "italic" }}>Nothing here yet.</div>;
+  return <div style={{ fontSize: C.text.small, color: C.inkSoft }}>Nothing here yet.</div>;
 }

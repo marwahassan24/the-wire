@@ -135,7 +135,9 @@ test("carrying with a resolution_note succeeds and leaves resolved_by/resolved_a
   assert.equal(res.statusCode, 200);
   const body = res.json();
   assert.equal(body.status, "carried");
-  assert.equal(body.resolution_note, "Carry forward — ran out of time.");
+  // Em dashes are normalised to plain hyphens on save (Jeremy dislikes them) —
+  // this also confirms typed-in-later em dashes get caught, not just seed data.
+  assert.equal(body.resolution_note, "Carry forward - ran out of time.");
   assert.equal(body.resolved_by, null);
   assert.equal(body.resolved_at, null);
 });

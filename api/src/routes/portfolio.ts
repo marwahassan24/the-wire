@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { withTransaction } from "../db.js";
 import { recordAudit } from "../audit.js";
 import { friendlyConstraintMessage } from "../dbErrors.js";
+import { normalizeText } from "../textNormalize.js";
 
 const putPortfolioSchema = {
   body: {
@@ -46,7 +47,7 @@ const portfolioRoutes: FastifyPluginAsync = async (fastify) => {
            ON CONFLICT (client_id)
            DO UPDATE SET summary = EXCLUDED.summary, updated_by = EXCLUDED.updated_by, updated_at = now()
            RETURNING client_id, summary, updated_by, updated_at`,
-          [clientId, body.summary, userId]
+          [clientId, normalizeText(body.summary), userId]
         );
         const after = rows[0];
         await recordAudit(tx, {
@@ -84,7 +85,7 @@ const portfolioRoutes: FastifyPluginAsync = async (fastify) => {
             `INSERT INTO portfolio_log (client_id, entry_date, text, author_id)
              VALUES ($1, COALESCE($2, CURRENT_DATE), $3, $4)
              RETURNING id, client_id, entry_date, text, author_id, created_at`,
-            [clientId, body.entry_date ?? null, body.text, userId]
+            [clientId, body.entry_date ?? null, normalizeText(body.text), userId]
           );
           const row = rows[0];
           await recordAudit(tx, {

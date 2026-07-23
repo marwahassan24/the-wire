@@ -4,31 +4,20 @@ import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
 import type { OpsDashboard } from "../types.js";
-import { Card, Pill } from "../components/ui.js";
+import { Card, Pill, SectionHeading } from "../components/ui.js";
 
 function Stat({ n, label, tone }: { n: number; label: string; tone?: string }) {
   return (
-    <Card style={{ padding: 14, textAlign: "center" }}>
-      <div style={{ fontSize: 26, fontWeight: 800, color: tone ?? C.primary, lineHeight: 1.1 }}>{n}</div>
-      <div
-        style={{
-          fontFamily: C.mono,
-          fontSize: 10,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: C.inkSoft,
-          marginTop: 4,
-        }}
-      >
-        {label}
-      </div>
+    <Card style={{ padding: "20px 16px", textAlign: "center" }}>
+      <div style={{ fontSize: 28, fontWeight: 800, color: tone ?? C.primary, lineHeight: 1.1 }}>{n}</div>
+      <div style={{ fontSize: C.text.small, color: C.inkSoft, marginTop: 8 }}>{label}</div>
     </Card>
   );
 }
 
 function reviewPill(daysUntil: number) {
   if (daysUntil < 0) return <Pill tone="red">overdue {Math.abs(daysUntil)}d</Pill>;
-  if (daysUntil <= 14) return <Pill tone="amber">in {daysUntil}d - prep now</Pill>;
+  if (daysUntil <= 14) return <Pill tone="amber">in {daysUntil}d, prep now</Pill>;
   return <Pill tone="plain">in {daysUntil}d</Pill>;
 }
 
@@ -43,37 +32,37 @@ export function OpsPage() {
       .catch(() => setError("Couldn't load the operations dashboard."));
   }, []);
 
-  if (error) return <div style={{ color: C.red, fontSize: 13 }}>{error}</div>;
-  if (!dashboard) return <div style={{ color: C.inkSoft, fontSize: 13 }}>Loading…</div>;
+  if (error) return <div style={{ color: C.red, fontSize: C.text.small }}>{error}</div>;
+  if (!dashboard) return <div style={{ color: C.inkSoft, fontSize: C.text.small }}>Loading…</div>;
 
   const { stats, reviewsDue, pipeline, workload } = dashboard;
 
   return (
     <div>
-      <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 4 }}>Operations</div>
-      <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 20 }}>
-        Reviews, live cases and team load - driven by the same spine, nothing entered twice.
+      <div style={{ fontWeight: 700, fontSize: C.text.title, marginBottom: 8 }}>Operations</div>
+      <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 28 }}>
+        Reviews, live cases and team load, driven by the same spine, nothing entered twice.
       </div>
 
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-          gap: 10,
-          marginBottom: 28,
+          gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+          gap: 14,
+          marginBottom: 36,
         }}
       >
         <Stat n={stats.reviewsOverdue} label="Reviews overdue" tone={stats.reviewsOverdue ? C.red : undefined} />
-        <Stat n={stats.reviewsDueSoon} label="Reviews next 6wks" />
+        <Stat n={stats.reviewsDueSoon} label="Reviews next 6 weeks" />
         <Stat n={stats.reviewsNoDateSet} label="No review date" tone={stats.reviewsNoDateSet ? C.amber : undefined} />
         <Stat n={stats.liveCases} label="Live cases" />
         <Stat n={stats.withProvider} label="With provider" tone={C.mauve} />
         <Stat n={stats.withClient} label="With client" tone={C.mauve} />
-        <Stat n={stats.stalledCases} label="Stalled 14d+" tone={stats.stalledCases ? C.red : undefined} />
+        <Stat n={stats.stalledCases} label="Stalled 14 days+" tone={stats.stalledCases ? C.red : undefined} />
       </div>
 
-      <SectionTitle>Reviews due</SectionTitle>
-      <Card style={{ marginBottom: 28 }}>
+      <SectionHeading>Reviews due</SectionHeading>
+      <Card style={{ marginBottom: 36 }}>
         {reviewsDue.length === 0 && <Empty text="No review dates set yet." />}
         <div style={{ display: "flex", flexDirection: "column" }}>
           {reviewsDue.map((r) => (
@@ -81,20 +70,20 @@ export function OpsPage() {
               key={r.id}
               style={{
                 display: "flex",
-                gap: 10,
+                gap: 14,
                 alignItems: "baseline",
-                padding: "9px 0",
+                padding: "14px 0",
                 borderTop: `1px solid ${C.line}`,
                 flexWrap: "wrap",
               }}
             >
               <Link
                 to={`/clients/${r.id}`}
-                style={{ fontWeight: 700, fontSize: 13.5, color: C.primary, textDecoration: "none", minWidth: 170 }}
+                style={{ fontWeight: 600, fontSize: C.text.body, color: C.primary, textDecoration: "none", minWidth: 180 }}
               >
                 {r.first_names} {r.surname}
               </Link>
-              <span style={{ fontFamily: C.mono, fontSize: 10.5, color: C.inkSoft, flex: 1 }}>
+              <span style={{ fontSize: C.text.small, color: C.inkSoft, flex: 1 }}>
                 {r.next_review_type ?? "Review"} · {fmtDate(r.next_review_date)} · {r.review_cycle} cycle ·{" "}
                 {r.adviser_name}
               </span>
@@ -103,31 +92,37 @@ export function OpsPage() {
           ))}
         </div>
         {stats.reviewsNoDateSet > 0 && (
-          <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${C.line}`, fontSize: 12.5, color: C.amber }}>
+          <div
+            style={{
+              marginTop: 16,
+              paddingTop: 14,
+              borderTop: `1px solid ${C.line}`,
+              fontSize: C.text.small,
+              color: C.amber,
+            }}
+          >
             {stats.reviewsNoDateSet} client{stats.reviewsNoDateSet > 1 ? "s have" : " has"} no next review date set.
           </div>
         )}
       </Card>
 
-      <SectionTitle>Case pipeline</SectionTitle>
+      <SectionHeading>Case pipeline</SectionHeading>
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-          gap: 10,
-          marginBottom: 28,
+          gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+          gap: 14,
+          marginBottom: 36,
         }}
       >
         {pipeline.map(({ stage, count, cases }) => (
-          <Card key={stage} style={{ padding: 12, opacity: count ? 1 : 0.6 }}>
+          <Card key={stage} style={{ padding: 18, opacity: count ? 1 : 0.7 }}>
             <div
               style={{
-                fontFamily: C.mono,
-                fontSize: 10,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
+                fontSize: C.text.small,
+                fontWeight: 600,
                 color: stage === "Completed" ? C.mauve : C.primary,
-                marginBottom: 8,
+                marginBottom: 12,
                 display: "flex",
                 justifyContent: "space-between",
               }}
@@ -135,17 +130,17 @@ export function OpsPage() {
               <span>{stage}</span>
               <span>{count}</span>
             </div>
-            {count === 0 && <Empty text="-" />}
+            {count === 0 && <Empty text="Nothing here." />}
             {cases.map((k) => (
-              <div key={k.id} style={{ borderTop: `1px solid ${C.line}`, paddingTop: 8, marginTop: 8 }}>
+              <div key={k.id} style={{ borderTop: `1px solid ${C.line}`, paddingTop: 12, marginTop: 12 }}>
                 <Link
                   to={`/clients/${k.client_id}`}
-                  style={{ fontWeight: 700, fontSize: 12.5, color: C.primary, textDecoration: "none" }}
+                  style={{ fontWeight: 600, fontSize: C.text.small, color: C.primary, textDecoration: "none" }}
                 >
                   {k.client_first_names} {k.client_surname}
                 </Link>
-                <div style={{ fontSize: 12.5, margin: "2px 0 6px", lineHeight: 1.45 }}>{k.title}</div>
-                <div style={{ display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center" }}>
+                <div style={{ fontSize: C.text.small, margin: "4px 0 10px", lineHeight: 1.5 }}>{k.title}</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                   {k.waiting_on && <Pill tone="plain">with {k.waiting_on}</Pill>}
                   {stage !== "Completed" && k.idle_days > 14 && (
                     <Pill tone="red">stalled {k.idle_days}d</Pill>
@@ -157,7 +152,7 @@ export function OpsPage() {
         ))}
       </div>
 
-      <SectionTitle>Team workload</SectionTitle>
+      <SectionHeading>Team workload</SectionHeading>
       <Card>
         {workload.length === 0 && <Empty text="No active staff." />}
         <div style={{ display: "flex", flexDirection: "column" }}>
@@ -166,14 +161,14 @@ export function OpsPage() {
               key={w.id}
               style={{
                 display: "flex",
-                gap: 12,
+                gap: 16,
                 alignItems: "center",
-                padding: "10px 0",
+                padding: "14px 0",
                 borderTop: `1px solid ${C.line}`,
                 flexWrap: "wrap",
               }}
             >
-              <span style={{ fontWeight: 700, fontSize: 13.5, minWidth: 100 }}>{w.name}</span>
+              <span style={{ fontWeight: 600, fontSize: C.text.body, minWidth: 110 }}>{w.name}</span>
               <div
                 style={{
                   flex: "1 1 160px",
@@ -192,7 +187,7 @@ export function OpsPage() {
                   }}
                 />
               </div>
-              <span style={{ fontFamily: C.mono, fontSize: 10.5, color: C.inkSoft }}>
+              <span style={{ fontSize: C.text.small, color: C.inkSoft }}>
                 {w.open_tasks} open · {w.open_cases} case{w.open_cases === 1 ? "" : "s"}
               </span>
               {w.overdue_tasks > 0 && <Pill tone="red">{w.overdue_tasks} overdue</Pill>}
@@ -204,10 +199,6 @@ export function OpsPage() {
   );
 }
 
-function SectionTitle({ children }: { children: string }) {
-  return <div style={{ fontWeight: 700, fontSize: 16, margin: "0 0 10px" }}>{children}</div>;
-}
-
 function Empty({ text }: { text: string }) {
-  return <div style={{ fontSize: 12.5, color: C.inkSoft, fontStyle: "italic" }}>{text}</div>;
+  return <div style={{ fontSize: C.text.small, color: C.inkSoft }}>{text}</div>;
 }

@@ -39,12 +39,13 @@ export function LoginPage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        padding: 24,
       }}
     >
-      <Card style={{ width: 320 }}>
-        <div style={{ fontWeight: 700, fontSize: 18, color: C.primary, marginBottom: 4 }}>The Wire</div>
-        <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 20 }}>Sign in to continue</div>
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <Card style={{ width: 360 }}>
+        <div style={{ fontWeight: 700, fontSize: C.text.title, color: C.primary, marginBottom: 6 }}>The Wire</div>
+        <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 28 }}>Sign in to continue</div>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <Input
             type="email"
             placeholder="Email"
@@ -61,7 +62,7 @@ export function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          {error && <div style={{ fontSize: 12.5, color: C.red }}>{error}</div>}
+          {error && <div style={{ fontSize: C.text.small, color: C.red }}>{error}</div>}
           <Btn type="submit" tone="ink" disabled={submitting}>
             {submitting ? "Signing in…" : "Sign in"}
           </Btn>

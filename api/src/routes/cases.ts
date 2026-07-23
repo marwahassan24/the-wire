@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { pool, withTransaction } from "../db.js";
 import { recordAudit } from "../audit.js";
 import { friendlyConstraintMessage } from "../dbErrors.js";
+import { normalizeText } from "../textNormalize.js";
 
 const STAGES = [
   "Fact Find",
@@ -114,7 +115,7 @@ const casesRoutes: FastifyPluginAsync = async (fastify) => {
           `INSERT INTO cases (client_id, title, stage, waiting_on, owner_id)
            VALUES ($1, $2, $3, $4, $5)
            RETURNING ${CASE_COLUMNS}`,
-          [clientId, body.title, stage, body.waiting_on ?? null, body.owner_id ?? null]
+          [clientId, normalizeText(body.title), stage, body.waiting_on ?? null, body.owner_id ?? null]
         );
         const row = rows[0];
 
@@ -167,7 +168,7 @@ const casesRoutes: FastifyPluginAsync = async (fastify) => {
         const fields: string[] = [];
         const values: unknown[] = [];
         if (body.title !== undefined) {
-          values.push(body.title);
+          values.push(normalizeText(body.title));
           fields.push(`title = $${values.length}`);
         }
         if (body.waiting_on !== undefined) {
@@ -201,7 +202,7 @@ const casesRoutes: FastifyPluginAsync = async (fastify) => {
         if (stageChanging) {
           await tx.query(
             `INSERT INTO case_events (case_id, from_stage, to_stage, note, user_id) VALUES ($1, $2, $3, $4, $5)`,
-            [id, before.stage, body.stage, body.note ?? null, userId]
+            [id, before.stage, body.stage, body.note ? normalizeText(body.note) : null, userId]
           );
         }
 

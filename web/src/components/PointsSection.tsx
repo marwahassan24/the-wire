@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { theme as C } from "../theme.js";
 import { api, ApiError } from "../api.js";
 import type { Point } from "../types.js";
-import { Btn, Card, Eyebrow, Input, Pill } from "./ui.js";
+import { Btn, Card, Input, Pill, SectionHeading } from "./ui.js";
 
 const POINT_TONE = { open: "amber", carried: "amber", resolved: "plain" } as const;
 
@@ -41,13 +41,11 @@ export function PointsSection({
 
   return (
     <Card>
-      <Eyebrow>2 · Points to note / discuss</Eyebrow>
+      <SectionHeading>2. Points to note and discuss</SectionHeading>
       {points.length === 0 && (
-        <div style={{ fontSize: 12.5, color: C.inkSoft, fontStyle: "italic", marginBottom: 12 }}>
-          Nothing here yet.
-        </div>
+        <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 16 }}>Nothing here yet.</div>
       )}
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
         {points.map((p) => (
           <PointRow key={p.id} point={p} onUpdated={handleUpdated} />
         ))}
@@ -55,18 +53,18 @@ export function PointsSection({
 
       <form
         onSubmit={handleRaise}
-        style={{ display: "flex", gap: 8, marginTop: 16, paddingTop: 16, borderTop: `1px solid ${C.line}` }}
+        style={{ display: "flex", gap: 10, marginTop: 24, paddingTop: 24, borderTop: `1px solid ${C.line}` }}
       >
         <Input
           placeholder="Raise a new point…"
           value={newText}
           onChange={(e) => setNewText(e.target.value)}
         />
-        <Btn type="submit" tone="ink" small disabled={raising || !newText.trim()}>
+        <Btn type="submit" tone="ink" disabled={raising || !newText.trim()}>
           Raise
         </Btn>
       </form>
-      {error && <div style={{ fontSize: 12, color: C.red, marginTop: 6 }}>{error}</div>}
+      {error && <div style={{ fontSize: C.text.small, color: C.red, marginTop: 8 }}>{error}</div>}
     </Card>
   );
 }
@@ -103,18 +101,20 @@ function PointRow({ point, onUpdated }: { point: Point; onUpdated: (p: Point) =>
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-        <span style={{ fontFamily: C.mono, fontSize: 11.5, color: C.inkSoft }}>#{point.number}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+        <span style={{ fontSize: C.text.small, fontWeight: 600, color: C.inkSoft }}>#{point.number}</span>
         <Pill tone={POINT_TONE[point.status]}>{point.status}</Pill>
-        {point.raised_context && <span style={{ fontSize: 11, color: C.inkSoft }}>{point.raised_context}</span>}
+        {point.raised_context && (
+          <span style={{ fontSize: C.text.small, color: C.inkSoft }}>{point.raised_context}</span>
+        )}
       </div>
-      <div style={{ fontSize: 13.5, lineHeight: 1.55 }}>{point.text}</div>
+      <div style={{ fontSize: C.text.body, lineHeight: 1.6 }}>{point.text}</div>
       {point.resolution_note && (
-        <div style={{ fontSize: 12.5, color: C.inkSoft, marginTop: 3 }}>↳ {point.resolution_note}</div>
+        <div style={{ fontSize: C.text.small, color: C.inkSoft, marginTop: 6 }}>↳ {point.resolution_note}</div>
       )}
 
       {canAct && action === null && (
-        <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
           <Btn tone="ghost" small onClick={() => setAction("carry")}>
             Carry
           </Btn>
@@ -125,14 +125,14 @@ function PointRow({ point, onUpdated }: { point: Point; onUpdated: (p: Point) =>
       )}
 
       {action !== null && (
-        <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
           <Input
             placeholder={action === "carry" ? "Why is this carrying forward?" : "How was this resolved?"}
             value={note}
             onChange={(e) => setNote(e.target.value)}
             autoFocus
           />
-          <div style={{ display: "flex", gap: 6 }}>
+          <div style={{ display: "flex", gap: 8 }}>
             <Btn
               tone="ink"
               small
@@ -153,7 +153,7 @@ function PointRow({ point, onUpdated }: { point: Point; onUpdated: (p: Point) =>
               Cancel
             </Btn>
           </div>
-          {error && <div style={{ fontSize: 12, color: C.red }}>{error}</div>}
+          {error && <div style={{ fontSize: C.text.small, color: C.red }}>{error}</div>}
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { withTransaction } from "../db.js";
 import { recordAudit } from "../audit.js";
 import { friendlyConstraintMessage } from "../dbErrors.js";
+import { normalizeText } from "../textNormalize.js";
 
 const createPointSchema = {
   body: {
@@ -54,7 +55,7 @@ const pointsRoutes: FastifyPluginAsync = async (fastify) => {
            VALUES ($1, $2, $3, $4, 'open')
            RETURNING id, client_id, number, text, status, resolution_note, raised_at,
                      raised_context, resolved_at, resolved_by, created_at`,
-          [clientId, assignedNumber, body.text, body.raised_context ?? null]
+          [clientId, assignedNumber, normalizeText(body.text), body.raised_context ? normalizeText(body.raised_context) : null]
         );
         const row = rows[0];
         await recordAudit(tx, {
@@ -86,7 +87,12 @@ const pointsRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.patch("/api/points/:id", { schema: patchPointSchema }, async (request, reply) => {
     const id = Number((request.params as { id: string }).id);
-    const body = request.body as { text?: string; status?: string; resolution_note?: string };
+    const rawBody = request.body as { text?: string; status?: string; resolution_note?: string };
+    const body = {
+      ...rawBody,
+      text: rawBody.text !== undefined ? normalizeText(rawBody.text) : undefined,
+      resolution_note: rawBody.resolution_note !== undefined ? normalizeText(rawBody.resolution_note) : undefined,
+    };
     const userId = request.user!.id;
 
     try {

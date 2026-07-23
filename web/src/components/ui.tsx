@@ -1,28 +1,22 @@
 import type { ButtonHTMLAttributes, CSSProperties, InputHTMLAttributes, ReactNode } from "react";
 import { theme as C } from "../theme.js";
 
-export function Eyebrow({ children, color = C.inkSoft }: { children: ReactNode; color?: string }) {
+// A section heading inside a card: sentence case, body typeface, weight and
+// size carry the hierarchy. Real space below it separates the heading from
+// what follows, rather than a rule or a border doing that job.
+export function SectionHeading({ children, color = C.ink }: { children: ReactNode; color?: string }) {
   return (
-    <div
-      style={{
-        fontFamily: C.mono,
-        fontSize: 10.5,
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-        color,
-        marginBottom: 6,
-      }}
-    >
+    <div style={{ fontSize: C.text.heading, fontWeight: 600, lineHeight: 1.3, color, marginBottom: 16 }}>
       {children}
     </div>
   );
 }
 
 const PILL_TONES = {
-  primary: { bg: C.primarySoft, fg: C.primary, bd: C.primaryLine },
-  amber: { bg: C.amberSoft, fg: "#4a3a86", bd: "#ece28a" },
-  red: { bg: C.redSoft, fg: C.red, bd: "#e3bcbc" },
-  plain: { bg: "transparent", fg: C.inkSoft, bd: C.line },
+  primary: { bg: C.primarySoft, fg: C.primary },
+  amber: { bg: C.amberSoft, fg: "#4a3a86" },
+  red: { bg: C.redSoft, fg: C.red },
+  plain: { bg: C.paper, fg: C.inkSoft },
 } as const;
 
 export function Pill({ children, tone = "primary" }: { children: ReactNode; tone?: keyof typeof PILL_TONES }) {
@@ -30,14 +24,14 @@ export function Pill({ children, tone = "primary" }: { children: ReactNode; tone
   return (
     <span
       style={{
-        fontFamily: C.mono,
-        fontSize: 10.5,
-        padding: "3px 9px",
-        borderRadius: 3,
+        fontSize: C.text.small,
+        lineHeight: 1.3,
+        padding: "4px 11px",
+        borderRadius: 20,
         background: t.bg,
         color: t.fg,
-        border: `1px solid ${t.bd}`,
         whiteSpace: "nowrap",
+        display: "inline-block",
       }}
     >
       {children}
@@ -63,10 +57,11 @@ export function Btn({
       {...props}
       style={{
         fontFamily: C.sans,
-        fontSize: small ? 12 : 13,
+        fontSize: small ? C.text.small : 15,
         fontWeight: 600,
-        padding: small ? "5px 11px" : "8px 16px",
-        borderRadius: 4,
+        lineHeight: 1.3,
+        padding: small ? "8px 14px" : "10px 18px",
+        borderRadius: 8,
         background: t.bg,
         color: t.fg,
         border: `1px solid ${t.bd}`,
@@ -79,7 +74,15 @@ export function Btn({
 
 export function Card({ children, style }: { children: ReactNode; style?: CSSProperties }) {
   return (
-    <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 6, padding: 20, ...style }}>
+    <div
+      style={{
+        background: C.card,
+        borderRadius: 14,
+        padding: 28,
+        boxShadow: "0 1px 2px rgba(52, 37, 98, 0.06), 0 1px 12px rgba(52, 37, 98, 0.04)",
+        ...style,
+      }}
+    >
       {children}
     </div>
   );
@@ -91,9 +94,10 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
       {...props}
       style={{
         fontFamily: C.sans,
-        fontSize: 13,
-        padding: "8px 12px",
-        borderRadius: 4,
+        fontSize: C.text.body,
+        lineHeight: 1.5,
+        padding: "12px 14px",
+        borderRadius: 8,
         border: `1px solid ${C.line}`,
         background: "#fff",
         color: C.ink,
@@ -103,5 +107,36 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
         ...props.style,
       }}
     />
+  );
+}
+
+export function Select({
+  value,
+  onChange,
+  placeholder,
+  children,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  children: ReactNode;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      style={{
+        fontFamily: C.sans,
+        fontSize: C.text.body,
+        padding: "10px 12px",
+        borderRadius: 8,
+        border: `1px solid ${C.line}`,
+        background: "#fff",
+        color: C.ink,
+      }}
+    >
+      <option value="">{placeholder}</option>
+      {children}
+    </select>
   );
 }

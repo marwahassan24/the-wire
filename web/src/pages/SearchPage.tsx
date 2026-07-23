@@ -42,41 +42,39 @@ export function SearchPage() {
 
   return (
     <div>
-      <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 4 }}>Search</div>
-      <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 16 }}>
-        Across soft facts, points, meeting notes, and portfolio summaries - every client.
+      <div style={{ fontWeight: 700, fontSize: C.text.title, marginBottom: 8 }}>Search</div>
+      <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 24 }}>
+        Across soft facts, points, meeting notes, and portfolio summaries, every client.
       </div>
 
       <Input
         placeholder={`Try: an interest ("golf"), a theme ("gifting", "IHT")…`}
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        style={{ marginBottom: 20, maxWidth: 480 }}
+        style={{ marginBottom: 28, maxWidth: 480 }}
         autoFocus
       />
 
-      {error && <div style={{ color: C.red, fontSize: 13 }}>{error}</div>}
-      {loading && <div style={{ color: C.inkSoft, fontSize: 13 }}>Searching…</div>}
+      {error && <div style={{ color: C.red, fontSize: C.text.small }}>{error}</div>}
+      {loading && <div style={{ color: C.inkSoft, fontSize: C.text.small }}>Searching…</div>}
       {!loading && results && results.length === 0 && (
-        <div style={{ color: C.inkSoft, fontSize: 13 }}>No matches for "{q.trim()}".</div>
+        <div style={{ color: C.inkSoft, fontSize: C.text.small }}>No matches for "{q.trim()}".</div>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {results?.map((r, i) => (
-          <Card key={`${r.entity_type}-${r.entity_id}-${i}`} style={{ padding: 14 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+          <Card key={`${r.entity_type}-${r.entity_id}-${i}`} style={{ padding: "18px 22px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
               <Pill tone="plain">{ENTITY_LABEL[r.entity_type]}</Pill>
               <Link
                 to={`/clients/${r.client_id}`}
-                style={{ fontSize: 13, fontWeight: 600, color: C.primary, textDecoration: "none" }}
+                style={{ fontSize: C.text.small, fontWeight: 600, color: C.primary, textDecoration: "none" }}
               >
                 {r.client_first_names} {r.client_surname}
               </Link>
-              {r.entry_date && (
-                <span style={{ fontSize: 11.5, color: C.inkSoft, fontFamily: C.mono }}>{fmtDate(r.entry_date)}</span>
-              )}
+              {r.entry_date && <span style={{ fontSize: C.text.small, color: C.inkSoft }}>{fmtDate(r.entry_date)}</span>}
             </div>
-            <div style={{ fontSize: 13.5, lineHeight: 1.55 }}>{renderHighlighted(r.excerpt)}</div>
+            <div style={{ fontSize: C.text.body, lineHeight: 1.6 }}>{renderHighlighted(r.excerpt)}</div>
           </Card>
         ))}
       </div>

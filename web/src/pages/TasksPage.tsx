@@ -4,7 +4,7 @@ import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
 import type { Task } from "../types.js";
-import { Btn, Card, Pill } from "../components/ui.js";
+import { Btn, Card, Pill, Select } from "../components/ui.js";
 
 const STATUS_TONE = {
   awaiting_sense_check: "amber",
@@ -56,12 +56,12 @@ export function TasksPage() {
 
   return (
     <div>
-      <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 4 }}>Tasks</div>
-      <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 16 }}>
+      <div style={{ fontWeight: 700, fontSize: C.text.title, marginBottom: 8 }}>Tasks</div>
+      <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 24 }}>
         {overdueCount > 0 ? `${overdueCount} overdue` : "Nothing overdue"}
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 10, marginBottom: 28, flexWrap: "wrap" }}>
         <Select value={status} onChange={setStatus} placeholder="All statuses">
           <option value="awaiting_sense_check">Awaiting sense-check</option>
           <option value="confirmed">Confirmed</option>
@@ -80,47 +80,16 @@ export function TasksPage() {
         </Select>
       </div>
 
-      {error && <div style={{ color: C.red, fontSize: 13 }}>{error}</div>}
-      {!tasks && !error && <div style={{ color: C.inkSoft, fontSize: 13 }}>Loading…</div>}
-      {tasks && tasks.length === 0 && <div style={{ color: C.inkSoft, fontSize: 13 }}>No tasks match.</div>}
+      {error && <div style={{ color: C.red, fontSize: C.text.small }}>{error}</div>}
+      {!tasks && !error && <div style={{ color: C.inkSoft, fontSize: C.text.small }}>Loading…</div>}
+      {tasks && tasks.length === 0 && <div style={{ color: C.inkSoft, fontSize: C.text.small }}>No tasks match.</div>}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {tasks?.map((t) => (
           <TaskRow key={t.id} task={t} onUpdated={handleUpdated} />
         ))}
       </div>
     </div>
-  );
-}
-
-function Select({
-  value,
-  onChange,
-  placeholder,
-  children,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      style={{
-        fontFamily: C.sans,
-        fontSize: 13,
-        padding: "7px 10px",
-        borderRadius: 4,
-        border: `1px solid ${C.line}`,
-        background: "#fff",
-        color: C.ink,
-      }}
-    >
-      <option value="">{placeholder}</option>
-      {children}
-    </select>
   );
 }
 
@@ -144,15 +113,15 @@ function TaskRow({ task, onUpdated }: { task: Task; onUpdated: (t: Task) => void
   const overdue = task.due_date && new Date(task.due_date) < new Date(new Date().toDateString()) && task.status !== "done";
 
   return (
-    <Card style={{ padding: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+    <Card style={{ padding: "18px 22px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
             <Pill tone={STATUS_TONE[task.status]}>{STATUS_LABEL[task.status]}</Pill>
             {overdue && <Pill tone="red">overdue</Pill>}
           </div>
-          <div style={{ fontSize: 13.5 }}>{task.text}</div>
-          <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 3 }}>
+          <div style={{ fontSize: C.text.body, lineHeight: 1.5 }}>{task.text}</div>
+          <div style={{ fontSize: C.text.small, color: C.inkSoft, marginTop: 6 }}>
             <Link to={`/clients/${task.client_id}`} style={{ color: "inherit" }}>
               {task.client_first_names} {task.client_surname}
             </Link>
@@ -161,7 +130,7 @@ function TaskRow({ task, onUpdated }: { task: Task; onUpdated: (t: Task) => void
             {task.due_date && ` · due ${fmtDate(task.due_date)}`}
           </div>
         </div>
-        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+        <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
           {task.status === "awaiting_sense_check" && (
             <Btn tone="ink" small disabled={submitting} onClick={() => transition("confirmed")}>
               Confirm
@@ -174,7 +143,7 @@ function TaskRow({ task, onUpdated }: { task: Task; onUpdated: (t: Task) => void
           )}
         </div>
       </div>
-      {error && <div style={{ fontSize: 12, color: C.red, marginTop: 6 }}>{error}</div>}
+      {error && <div style={{ fontSize: C.text.small, color: C.red, marginTop: 8 }}>{error}</div>}
     </Card>
   );
 }

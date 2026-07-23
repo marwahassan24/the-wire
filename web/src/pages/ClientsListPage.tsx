@@ -25,27 +25,34 @@ export function ClientsListPage() {
 
   return (
     <div>
-      <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 16 }}>Clients</div>
+      <div style={{ fontWeight: 700, fontSize: C.text.title, marginBottom: 24 }}>Clients</div>
       <Input
         placeholder="Search by name or email…"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        style={{ marginBottom: 20, maxWidth: 360 }}
+        style={{ marginBottom: 28, maxWidth: 400 }}
       />
-      {error && <div style={{ color: C.red, fontSize: 13 }}>{error}</div>}
-      {!clients && !error && <div style={{ color: C.inkSoft, fontSize: 13 }}>Loading…</div>}
+      {error && <div style={{ color: C.red, fontSize: C.text.small }}>{error}</div>}
+      {!clients && !error && <div style={{ color: C.inkSoft, fontSize: C.text.small }}>Loading…</div>}
       {clients && clients.length === 0 && (
-        <div style={{ color: C.inkSoft, fontSize: 13 }}>No clients match.</div>
+        <div style={{ color: C.inkSoft, fontSize: C.text.small }}>No clients match.</div>
       )}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {clients?.map((c) => (
           <Link key={c.id} to={`/clients/${c.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-            <Card style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Card
+              style={{
+                padding: "20px 24px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <div>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>
+                <div style={{ fontWeight: 600, fontSize: C.text.body }}>
                   {c.first_names} {c.surname}
                 </div>
-                <div style={{ fontSize: 12.5, color: C.inkSoft, marginTop: 2 }}>
+                <div style={{ fontSize: C.text.small, color: C.inkSoft, marginTop: 4 }}>
                   {c.review_cycle} cycle
                   {c.next_review_date && ` · next review ${fmtDate(c.next_review_date)}`}
                 </div>
