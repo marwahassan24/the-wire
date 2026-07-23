@@ -12,6 +12,7 @@
     "migrate:down": "dotenv -e ../.env -- node-pg-migrate down",
     "migrate:create": "node-pg-migrate create",
     "seed": "tsx src/seed.ts",
+    "sync:moneyinfo": "tsx src/sync/runMoneyInfoSync.ts",
     "test": "NODE_ENV=test tsx --test src/**/*.test.ts"
   },
   "dependencies": {

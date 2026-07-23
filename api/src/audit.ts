@@ -3,7 +3,9 @@ import type { PoolClient } from "pg";
 export type AuditAction = "create" | "update" | "delete";
 
 export interface AuditParams {
-  userId: number;
+  // Null marks a machine-authored write (e.g. the moneyinfo sync job) -
+  // audit_log.user_id is nullable in the schema for exactly this reason.
+  userId: number | null;
   entityType: string;
   entityId: number;
   action: AuditAction;
