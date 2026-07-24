@@ -18,7 +18,8 @@
      2. Field mappings in mapping.ts's pick() calls are best-guesses against
         the endpoint list, not the real schema. Run --spec below, open
         wire-sync-output/moneyinfo-spec.json, and correct the pick() paths
-        for Client / ClientContactDetails / Plan / Investment / Employment.
+        for Client / ClientContactDetails / Plan / Investment / Employment
+        FIRST, before trusting any real sync output.
      3. Whether POST /Clients/Search with an empty body actually returns
         client stubs, or needs a body shape (e.g. { page: 1 }) - the
         service-groups fallback in syncJob.ts exists for exactly this case.
@@ -29,6 +30,14 @@
      5. Rate limiting / retry behaviour under real load - the retry/backoff
         in httpMoneyInfoClient.ts is carried over from the file-based
         script but has only run against nothing.
+     6. Structured holdings (portfolio_holdings): mapHoldingsFromList() in
+        mapping.ts guesses provider/planType/holdingName/assetClass/value
+        paths per plan/investment/account. asset_class especially is a
+        guess - moneyinfo may name it differently per product type, or not
+        expose it at all for some plans, and it'll come back NULL until the
+        real field is found in spec.json. Check a handful of real holdings
+        against what's in the moneyinfo UI before trusting the numbers for
+        an asset-allocation chart.
 
    Usage
    -----
@@ -102,7 +111,10 @@ async function main() {
 
   if (result.updated.length) {
     console.log(`Updated (${result.updated.length}):`);
-    for (const u of result.updated) console.log(`  ✓ ${u.name} (moneyinfo ${u.moneyinfoClientId} -> Wire client ${u.clientId})`);
+    for (const u of result.updated)
+      console.log(
+        `  ✓ ${u.name} (moneyinfo ${u.moneyinfoClientId} -> Wire client ${u.clientId}) - ${u.holdingsCount} holding(s)`
+      );
   }
   if (result.unmatched.length) {
     console.log(`\nUnmatched - not linked in Wire yet (${result.unmatched.length}):`);
@@ -115,6 +127,9 @@ async function main() {
 
   console.log(
     `\nRaw bundles (incl. thread messages) saved to moneyinfo_raw_sync for the ${result.updated.length} updated client(s) - for the later Phase 2 extraction step, not read by this sync.`
+  );
+  console.log(
+    "Structured holdings (plans/investments/accounts) were replaced in portfolio_holdings for each updated client - check a few against the moneyinfo UI before trusting them for charting (see checklist item 6 above)."
   );
   console.log("Reminder: soft facts, points and meeting notes were not touched - those stay adviser-authored.\n");
 

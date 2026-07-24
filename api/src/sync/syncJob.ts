@@ -11,10 +11,16 @@ import type { ClientBundle, MoneyInfoClient } from "./types.js";
 //   - Read-only against moneyinfo. This module never calls anything but
 //     GET and the one documented read-style POST /Clients/Search (see
 //     MoneyInfoClient) - it has no way to write back to moneyinfo at all.
-//   - Fills basic client facts (name, dob, email, phone, status) and the
-//     portfolio summary line ONLY. It never writes soft_facts, points, or
-//     meeting_notes - those are adviser narrative, and there is simply no
-//     code path here that touches those tables.
+//   - Fills basic client facts (name, dob, email, phone, status), the
+//     portfolio summary line, and structured portfolio_holdings rows
+//     (plans/investments/accounts, for asset-allocation charting) ONLY. It
+//     never writes soft_facts, points, or meeting_notes - those are
+//     adviser narrative, and there is simply no code path here that
+//     touches those tables.
+//   - portfolio_holdings is entirely sync-derived (no adviser edits it),
+//     so each sync run replaces a matched client's rows wholesale rather
+//     than appending - it's a snapshot of "what moneyinfo says now", not
+//     a history.
 //   - UPDATE-ONLY: a moneyinfo client is only synced into a Wire client
 //     that already exists and already has moneyinfo_client_id set. This
 //     job never INSERTs a new clients row, because adviser_id / cm_id /
@@ -55,6 +61,7 @@ export interface SyncedClient {
   moneyinfoClientId: string;
   clientId: number;
   name: string;
+  holdingsCount: number;
 }
 
 export interface UnmatchedClient {
@@ -164,6 +171,46 @@ export async function runMoneyInfoSync(miClient: MoneyInfoClient, options: SyncO
           after: portfolioRows[0],
         });
 
+        const { rows: beforeHoldingsCountRows } = await tx.query<{ count: number }>(
+          `SELECT count(*)::int AS count FROM portfolio_holdings WHERE client_id = $1`,
+          [existingId]
+        );
+        await tx.query(`DELETE FROM portfolio_holdings WHERE client_id = $1`, [existingId]);
+        for (const h of mapped.holdings) {
+          await tx.query(
+            `INSERT INTO portfolio_holdings
+               (client_id, moneyinfo_holding_id, source, provider, plan_type, holding_name, asset_class, value, currency, as_of_date, raw)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+            [
+              existingId,
+              h.moneyinfoHoldingId,
+              h.source,
+              h.provider,
+              h.planType,
+              h.holdingName,
+              h.assetClass,
+              h.value,
+              h.currency,
+              h.asOfDate,
+              JSON.stringify(h.raw),
+            ]
+          );
+        }
+        // One summarising audit entry rather than one per holding row -
+        // the rows themselves (and moneyinfo_raw_sync below) are the
+        // detailed record; audit_log just needs to show the replace happened.
+        await recordAudit(tx, {
+          userId: null,
+          entityType: "portfolio_holdings",
+          entityId: existingId,
+          action: "update",
+          before: { count: beforeHoldingsCountRows[0].count },
+          after: {
+            count: mapped.holdings.length,
+            totalValue: mapped.holdings.reduce((sum, h) => sum + (h.value ?? 0), 0),
+          },
+        });
+
         // Raw sidecar, incl. thread messages, for the later extraction
         // step. Never read by soft_facts/points/meeting_notes.
         const { rows: rawRows } = await tx.query(
@@ -187,6 +234,7 @@ export async function runMoneyInfoSync(miClient: MoneyInfoClient, options: SyncO
         moneyinfoClientId,
         clientId: updated.id,
         name: `${mapped.firstNames} ${mapped.surname}`,
+        holdingsCount: mapped.holdings.length,
       });
     } catch (err) {
       result.errors.push({ moneyinfoClientId, message: err instanceof Error ? err.message : String(err) });

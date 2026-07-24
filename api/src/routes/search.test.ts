@@ -40,8 +40,8 @@ before(async () => {
   clientId = clientRows[0].id;
 
   await pool.query(
-    `INSERT INTO soft_facts (client_id, fact_date, text, author_id) VALUES ($1, CURRENT_DATE, $2, $1)`,
-    [clientId, `Mentioned enjoying ${token} on weekends.`]
+    `INSERT INTO soft_facts (client_id, fact_date, text, author_id) VALUES ($1, CURRENT_DATE, $2, $3)`,
+    [clientId, `Mentioned enjoying ${token} on weekends.`, userId]
   );
   await pool.query(`INSERT INTO points (client_id, number, text, status) VALUES ($1, 1, $2, 'open')`, [
     clientId,
@@ -49,12 +49,12 @@ before(async () => {
   ]);
   await pool.query(
     `INSERT INTO meeting_notes (client_id, meeting_date, meeting_type, body, author_id, status, approved_by, approved_at)
-     VALUES ($1, CURRENT_DATE, 'Ad hoc', $2, $1, 'approved', $1, now())`,
-    [clientId, `Discussed the ${token} plan at length.`]
+     VALUES ($1, CURRENT_DATE, 'Ad hoc', $2, $3, 'approved', $3, now())`,
+    [clientId, `Discussed the ${token} plan at length.`, userId]
   );
   await pool.query(
-    `INSERT INTO portfolio_summary (client_id, summary, updated_by) VALUES ($1, $2, $1)`,
-    [clientId, `Portfolio touches on ${token} exposure.`]
+    `INSERT INTO portfolio_summary (client_id, summary, updated_by) VALUES ($1, $2, $3)`,
+    [clientId, `Portfolio touches on ${token} exposure.`, userId]
   );
 
   const loginRes = await app.inject({

@@ -38,6 +38,25 @@ export interface MoneyInfoClient {
   fetchClientBundle(clientId: string): Promise<ClientBundle>;
 }
 
+// One row of structured portfolio detail - a plan, an underlying
+// investment, or an account - for the front end to chart asset allocation
+// and break down where money sits. Entirely sync-derived; there is no
+// adviser-editable path onto this shape.
+export type HoldingSource = "plan" | "investment" | "account";
+
+export interface MappedHolding {
+  moneyinfoHoldingId: string | null;
+  source: HoldingSource;
+  provider: string | null;
+  planType: string | null;
+  holdingName: string | null;
+  assetClass: string | null;
+  value: number | null;
+  currency: string;
+  asOfDate: string | null;
+  raw: unknown;
+}
+
 export interface MappedClientFacts {
   moneyinfoClientId: string;
   firstNames: string;
@@ -47,6 +66,7 @@ export interface MappedClientFacts {
   phone: string | null;
   status: "Working" | "Retired";
   portfolioSummary: string;
+  holdings: MappedHolding[];
   threadCount: number;
   dependantCount: number;
 }

@@ -67,11 +67,30 @@ export interface PortfolioLogEntry {
   created_at: string;
 }
 
+export interface PortfolioHolding {
+  id: number;
+  client_id: number;
+  moneyinfo_holding_id: string | null;
+  source: "plan" | "investment" | "account";
+  provider: string | null;
+  plan_type: string | null;
+  holding_name: string | null;
+  asset_class: string | null;
+  value: string | null;
+  currency: string;
+  as_of_date: string | null;
+  synced_at: string;
+}
+
 export interface Portfolio {
   summary: string;
   updated_by: number | null;
   updated_at: string | null;
   logs: PortfolioLogEntry[];
+  // Structured, sync-derived holdings for asset-allocation charting - see
+  // the moneyinfo sync (api/src/sync/). `value` comes back as a string
+  // since it's a Postgres numeric column; parse with Number() when charting.
+  holdings: PortfolioHolding[];
 }
 
 export interface ClientSpine extends ClientSummary {

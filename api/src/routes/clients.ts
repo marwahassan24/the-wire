@@ -190,38 +190,46 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get("/api/clients/:id", async (request, reply) => {
     const id = Number((request.params as { id: string }).id);
 
-    const [clientResult, softFacts, points, meetingNotes, portfolioSummary, portfolioLog] = await Promise.all([
-      pool.query(`SELECT ${CLIENT_LIST_COLUMNS} FROM clients WHERE id = $1 AND deleted_at IS NULL`, [id]),
-      pool.query(
-        `SELECT id, client_id, fact_date, text, author_id, created_at
-           FROM soft_facts WHERE client_id = $1 AND deleted_at IS NULL
-          ORDER BY fact_date DESC, created_at DESC`,
-        [id]
-      ),
-      pool.query(
-        `SELECT id, client_id, number, text, status, resolution_note, raised_at,
-                raised_context, resolved_at, resolved_by, created_at
-           FROM points WHERE client_id = $1 AND deleted_at IS NULL
-          ORDER BY number ASC`,
-        [id]
-      ),
-      pool.query(
-        `SELECT id, client_id, meeting_date, meeting_type, body, author_id,
-                status, approved_by, approved_at, created_at
-           FROM meeting_notes WHERE client_id = $1 AND deleted_at IS NULL
-          ORDER BY meeting_date DESC, created_at DESC`,
-        [id]
-      ),
-      pool.query(`SELECT client_id, summary, updated_by, updated_at FROM portfolio_summary WHERE client_id = $1`, [
-        id,
-      ]),
-      pool.query(
-        `SELECT id, client_id, entry_date, text, author_id, created_at
-           FROM portfolio_log WHERE client_id = $1 AND deleted_at IS NULL
-          ORDER BY entry_date DESC, created_at DESC`,
-        [id]
-      ),
-    ]);
+    const [clientResult, softFacts, points, meetingNotes, portfolioSummary, portfolioLog, portfolioHoldings] =
+      await Promise.all([
+        pool.query(`SELECT ${CLIENT_LIST_COLUMNS} FROM clients WHERE id = $1 AND deleted_at IS NULL`, [id]),
+        pool.query(
+          `SELECT id, client_id, fact_date, text, author_id, created_at
+             FROM soft_facts WHERE client_id = $1 AND deleted_at IS NULL
+            ORDER BY fact_date DESC, created_at DESC`,
+          [id]
+        ),
+        pool.query(
+          `SELECT id, client_id, number, text, status, resolution_note, raised_at,
+                  raised_context, resolved_at, resolved_by, created_at
+             FROM points WHERE client_id = $1 AND deleted_at IS NULL
+            ORDER BY number ASC`,
+          [id]
+        ),
+        pool.query(
+          `SELECT id, client_id, meeting_date, meeting_type, body, author_id,
+                  status, approved_by, approved_at, created_at
+             FROM meeting_notes WHERE client_id = $1 AND deleted_at IS NULL
+            ORDER BY meeting_date DESC, created_at DESC`,
+          [id]
+        ),
+        pool.query(`SELECT client_id, summary, updated_by, updated_at FROM portfolio_summary WHERE client_id = $1`, [
+          id,
+        ]),
+        pool.query(
+          `SELECT id, client_id, entry_date, text, author_id, created_at
+             FROM portfolio_log WHERE client_id = $1 AND deleted_at IS NULL
+            ORDER BY entry_date DESC, created_at DESC`,
+          [id]
+        ),
+        pool.query(
+          `SELECT id, client_id, moneyinfo_holding_id, source, provider, plan_type, holding_name,
+                  asset_class, value, currency, as_of_date, synced_at
+             FROM portfolio_holdings WHERE client_id = $1
+            ORDER BY source, provider NULLS LAST, holding_name NULLS LAST`,
+          [id]
+        ),
+      ]);
 
     if (clientResult.rows.length === 0) {
       reply.code(404).send({ error: "Client not found" });
@@ -238,6 +246,10 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
         updated_by: portfolioSummary.rows[0]?.updated_by ?? null,
         updated_at: portfolioSummary.rows[0]?.updated_at ?? null,
         logs: portfolioLog.rows,
+        // Structured, sync-derived holdings (plans/investments/accounts)
+        // for asset-allocation charting - separate from the free-text
+        // summary above, which stays as-is.
+        holdings: portfolioHoldings.rows,
       },
     };
   });

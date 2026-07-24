@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { asList, gbp, mapClientBundle, pick, REDACT } from "./mapping.js";
+import { asList, gbp, mapClientBundle, mapHoldings, pick, REDACT } from "./mapping.js";
 import type { ClientBundle } from "./types.js";
 
 const emptyBundle: ClientBundle = {
@@ -104,4 +104,70 @@ test("mapClientBundle counts threads and dependants but does not inline their co
   const mapped = mapClientBundle("1", {}, bundle);
   assert.equal(mapped.threadCount, 2);
   assert.equal(mapped.dependantCount, 1);
+});
+
+test("mapHoldings extracts provider, plan type, holding name, asset class and value from plans/investments/accounts", () => {
+  const bundle: ClientBundle = {
+    ...emptyBundle,
+    plans: [
+      {
+        planId: "P1",
+        planName: "Fidelity SIPP",
+        planType: "SIPP",
+        provider: "Fidelity",
+        currentValue: 250000,
+        assetClass: "Equity",
+        valuationDate: "2026-06-01T00:00:00Z",
+      },
+    ],
+    investments: [{ investmentId: "I1", fundName: "Global Equity Fund", assetClass: "Equity", value: 100000 }],
+    accounts: [{ accountId: "A1", provider: "Barclays", balance: 5000 }],
+  };
+
+  const holdings = mapHoldings(bundle);
+  assert.equal(holdings.length, 3);
+
+  const plan = holdings.find((h) => h.source === "plan")!;
+  assert.equal(plan.moneyinfoHoldingId, "P1");
+  assert.equal(plan.provider, "Fidelity");
+  assert.equal(plan.planType, "SIPP");
+  assert.equal(plan.holdingName, "Fidelity SIPP");
+  assert.equal(plan.assetClass, "Equity");
+  assert.equal(plan.value, 250000);
+  assert.equal(plan.currency, "GBP");
+  assert.equal(plan.asOfDate, "2026-06-01");
+
+  const investment = holdings.find((h) => h.source === "investment")!;
+  assert.equal(investment.moneyinfoHoldingId, "I1");
+  assert.equal(investment.holdingName, "Global Equity Fund");
+  assert.equal(investment.value, 100000);
+
+  const account = holdings.find((h) => h.source === "account")!;
+  assert.equal(account.moneyinfoHoldingId, "A1");
+  assert.equal(account.provider, "Barclays");
+  assert.equal(account.value, 5000);
+});
+
+test("mapHoldings returns null (not a guessed default) for fields that aren't present", () => {
+  const holdings = mapHoldings({ ...emptyBundle, plans: [{ planId: "P1" }] });
+  assert.equal(holdings.length, 1);
+  const [h] = holdings;
+  assert.equal(h.provider, null);
+  assert.equal(h.planType, null);
+  assert.equal(h.holdingName, null);
+  assert.equal(h.assetClass, null);
+  assert.equal(h.value, null);
+  assert.equal(h.asOfDate, null);
+  assert.equal(h.currency, "GBP");
+});
+
+test("mapClientBundle attaches structured holdings alongside the text summary, not instead of it", () => {
+  const bundle: ClientBundle = {
+    ...emptyBundle,
+    plans: [{ planName: "ISA", currentValue: 40000, assetClass: "Cash" }],
+  };
+  const mapped = mapClientBundle("1", {}, bundle);
+  assert.equal(mapped.holdings.length, 1);
+  assert.equal(mapped.holdings[0].assetClass, "Cash");
+  assert.match(mapped.portfolioSummary, /ISA £40,000/);
 });

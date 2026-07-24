@@ -84,9 +84,13 @@ before(async () => {
 });
 
 after(async () => {
-  await pool.query(`DELETE FROM audit_log WHERE entity_type IN ('client', 'portfolio_summary', 'moneyinfo_raw_sync')
-    AND entity_id IN ($1, $2)`, [matchedClientId, otherClientId]);
+  await pool.query(
+    `DELETE FROM audit_log WHERE entity_type IN ('client', 'portfolio_summary', 'portfolio_holdings', 'moneyinfo_raw_sync')
+    AND entity_id IN ($1, $2)`,
+    [matchedClientId, otherClientId]
+  );
   await pool.query(`DELETE FROM moneyinfo_raw_sync WHERE client_id IN ($1, $2)`, [matchedClientId, otherClientId]);
+  await pool.query(`DELETE FROM portfolio_holdings WHERE client_id IN ($1, $2)`, [matchedClientId, otherClientId]);
   await pool.query(`DELETE FROM portfolio_summary WHERE client_id IN ($1, $2)`, [matchedClientId, otherClientId]);
   await pool.query(`DELETE FROM clients WHERE id IN ($1, $2)`, [matchedClientId, otherClientId]);
   await pool.query(`DELETE FROM sessions WHERE user_id = $1`, [userId]);
@@ -165,12 +169,78 @@ test("audit entries for sync writes carry a null user_id to mark them as machine
 
   const { rows } = await pool.query(
     `SELECT entity_type, user_id FROM audit_log
-      WHERE entity_type IN ('client', 'portfolio_summary', 'moneyinfo_raw_sync') AND entity_id = $1
+      WHERE entity_type IN ('client', 'portfolio_summary', 'portfolio_holdings', 'moneyinfo_raw_sync') AND entity_id = $1
       ORDER BY id DESC LIMIT 1`,
     [matchedClientId]
   );
   assert.ok(rows.length >= 1);
   for (const row of rows) assert.equal(row.user_id, null);
+});
+
+test("writes structured portfolio_holdings rows with provider, plan type, asset class and value", async () => {
+  const stub = { clientId: MATCHED_MI_ID };
+  const bundle = makeBundle({
+    plans: [
+      {
+        planId: "P1",
+        planName: "Fidelity SIPP",
+        planType: "SIPP",
+        provider: "Fidelity",
+        currentValue: 250000,
+        assetClass: "Equity",
+      },
+    ],
+    investments: [{ investmentId: "I1", fundName: "Global Bond Fund", assetClass: "Bond", value: 50000 }],
+    accounts: [{ accountId: "A1", provider: "Barclays", balance: 5000 }],
+  });
+  const client = new FixtureMoneyInfoClient([stub], { [MATCHED_MI_ID]: bundle });
+
+  await runMoneyInfoSync(client, { limit: 10 });
+
+  const { rows } = await pool.query(
+    `SELECT moneyinfo_holding_id, source, provider, plan_type, holding_name, asset_class, value, currency
+       FROM portfolio_holdings WHERE client_id = $1 ORDER BY source`,
+    [matchedClientId]
+  );
+  assert.equal(rows.length, 3);
+
+  const account = rows.find((r) => r.source === "account");
+  assert.equal(account.moneyinfo_holding_id, "A1");
+  assert.equal(account.provider, "Barclays");
+  assert.equal(Number(account.value), 5000);
+
+  const investment = rows.find((r) => r.source === "investment");
+  assert.equal(investment.holding_name, "Global Bond Fund");
+  assert.equal(investment.asset_class, "Bond");
+  assert.equal(Number(investment.value), 50000);
+
+  const plan = rows.find((r) => r.source === "plan");
+  assert.equal(plan.provider, "Fidelity");
+  assert.equal(plan.plan_type, "SIPP");
+  assert.equal(plan.asset_class, "Equity");
+  assert.equal(Number(plan.value), 250000);
+  assert.equal(plan.currency, "GBP");
+});
+
+test("re-syncing a client replaces portfolio_holdings wholesale rather than accumulating duplicates", async () => {
+  const stub = { clientId: MATCHED_MI_ID };
+  const firstRun = new FixtureMoneyInfoClient([stub], {
+    [MATCHED_MI_ID]: makeBundle({ plans: [{ planId: "P1", planName: "Old Plan", currentValue: 1000 }] }),
+  });
+  await runMoneyInfoSync(firstRun, { limit: 10 });
+
+  const secondRun = new FixtureMoneyInfoClient([stub], {
+    [MATCHED_MI_ID]: makeBundle({ plans: [{ planId: "P2", planName: "New Plan", currentValue: 2000 }] }),
+  });
+  await runMoneyInfoSync(secondRun, { limit: 10 });
+
+  const { rows } = await pool.query(
+    `SELECT moneyinfo_holding_id, holding_name FROM portfolio_holdings WHERE client_id = $1`,
+    [matchedClientId]
+  );
+  assert.equal(rows.length, 1, "old holdings must be replaced, not accumulated, on each sync run");
+  assert.equal(rows[0].moneyinfo_holding_id, "P2");
+  assert.equal(rows[0].holding_name, "New Plan");
 });
 
 test("a stub with no matching Wire client is reported unmatched and never inserted", async () => {
