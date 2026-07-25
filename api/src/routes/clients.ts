@@ -190,7 +190,7 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get("/api/clients/:id", async (request, reply) => {
     const id = Number((request.params as { id: string }).id);
 
-    const [clientResult, softFacts, points, meetingNotes, portfolioSummary, portfolioLog, portfolioHoldings] =
+    const [clientResult, softFacts, points, meetingNotes, portfolioSummary, portfolioLog, portfolioHoldings, attachments] =
       await Promise.all([
         pool.query(`SELECT ${CLIENT_LIST_COLUMNS} FROM clients WHERE id = $1 AND deleted_at IS NULL`, [id]),
         pool.query(
@@ -229,6 +229,15 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
             ORDER BY source, provider NULLS LAST, holding_name NULLS LAST`,
           [id]
         ),
+        pool.query(
+          `SELECT a.id, a.client_id, a.filename, a.content_type, a.size_bytes, a.note,
+                  a.uploaded_by, u.name AS uploaded_by_name, a.created_at
+             FROM attachments a
+             JOIN users u ON u.id = a.uploaded_by
+            WHERE a.client_id = $1 AND a.deleted_at IS NULL
+            ORDER BY a.created_at DESC`,
+          [id]
+        ),
       ]);
 
     if (clientResult.rows.length === 0) {
@@ -251,6 +260,7 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
         // summary above, which stays as-is.
         holdings: portfolioHoldings.rows,
       },
+      attachments: attachments.rows,
     };
   });
 

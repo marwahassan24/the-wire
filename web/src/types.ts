@@ -93,11 +93,24 @@ export interface Portfolio {
   holdings: PortfolioHolding[];
 }
 
+export interface Attachment {
+  id: number;
+  client_id: number;
+  filename: string;
+  content_type: string;
+  size_bytes: number;
+  note: string | null;
+  uploaded_by: number;
+  uploaded_by_name: string;
+  created_at: string;
+}
+
 export interface ClientSpine extends ClientSummary {
   softFacts: SoftFact[];
   points: Point[];
   meetingNotes: MeetingNote[];
   portfolio: Portfolio;
+  attachments: Attachment[];
 }
 
 export interface Task {

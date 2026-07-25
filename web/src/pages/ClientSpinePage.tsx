@@ -3,9 +3,10 @@ import { Link, useParams } from "react-router-dom";
 import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
-import type { ClientSpine, Point } from "../types.js";
+import type { Attachment, ClientSpine, Point } from "../types.js";
 import { Card, Pill, SectionHeading } from "../components/ui.js";
 import { PointsSection } from "../components/PointsSection.js";
+import { AttachmentsSection } from "../components/AttachmentsSection.js";
 
 export function ClientSpinePage() {
   const { id } = useParams<{ id: string }>();
@@ -105,6 +106,12 @@ export function ClientSpinePage() {
             </div>
           )}
         </Card>
+
+        <AttachmentsSection
+          clientId={client.id}
+          attachments={client.attachments}
+          onChange={(attachments: Attachment[]) => setClient({ ...client, attachments })}
+        />
       </div>
     </div>
   );

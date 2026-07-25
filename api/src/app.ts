@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
+import multipart from "@fastify/multipart";
 import rateLimit from "@fastify/rate-limit";
 import { env } from "./env.js";
 import { pool } from "./db.js";
@@ -16,6 +17,7 @@ import casesRoutes from "./routes/cases.js";
 import searchRoutes from "./routes/search.js";
 import prepRoutes from "./routes/prep.js";
 import opsRoutes from "./routes/ops.js";
+import attachmentsRoutes from "./routes/attachments.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   // Fastify's default ajv config silently strips unknown body/query fields
@@ -33,6 +35,9 @@ export async function buildApp(): Promise<FastifyInstance> {
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
   });
   await app.register(cookie);
+  await app.register(multipart, {
+    limits: { fileSize: env.MAX_UPLOAD_BYTES, files: 1 },
+  });
   await app.register(rateLimit, { global: false });
   await app.register(authPlugin);
   await app.register(authRoutes);
@@ -50,6 +55,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     await protectedRoutes.register(searchRoutes);
     await protectedRoutes.register(prepRoutes);
     await protectedRoutes.register(opsRoutes);
+    await protectedRoutes.register(attachmentsRoutes);
   });
 
   app.get("/health", async () => {
