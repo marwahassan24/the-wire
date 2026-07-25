@@ -8,9 +8,21 @@ import { pool } from "./db.js";
 import { hashPassword } from "./auth/password.js";
 
 // Dev-only credential shared by all seeded staff accounts, for logging into
-// a local instance. Never used against staging or live — those get real
-// per-person passwords set some other way once auth grows beyond Phase 1.
+// a local instance. On a real deployed instance (NODE_ENV=production) this
+// refuses to run without SEED_PASSWORD set - a well-known password shipped
+// in source control is fine for localhost, not for anything reachable from
+// the internet, even with fake TESTCLIENT data behind it. Per-person real
+// passwords are a later Phase 1 follow-up, same as before.
 const DEV_PASSWORD = "changeme123";
+
+if (process.env.NODE_ENV === "production" && !process.env.SEED_PASSWORD) {
+  console.error(
+    "Refusing to seed a production instance with the default password.\n" +
+      "Set SEED_PASSWORD in the environment first, then re-run this script."
+  );
+  process.exit(1);
+}
+const STAFF_PASSWORD = process.env.SEED_PASSWORD || DEV_PASSWORD;
 
 type StaffName = "Jeremy" | "Zoe" | "Louise" | "Sarah";
 
@@ -242,7 +254,7 @@ async function main() {
       RESTART IDENTITY CASCADE
     `);
 
-    const devPasswordHash = await hashPassword(DEV_PASSWORD);
+    const staffPasswordHash = await hashPassword(STAFF_PASSWORD);
 
     const staffId = new Map<StaffName, number>();
     for (const staff of STAFF) {
@@ -250,7 +262,7 @@ async function main() {
         `INSERT INTO users (email, password_hash, name, role, active)
          VALUES ($1, $2, $3, $4, true)
          RETURNING id`,
-        [staff.email, devPasswordHash, staff.name, staff.role]
+        [staff.email, staffPasswordHash, staff.name, staff.role]
       );
       staffId.set(staff.name, rows[0].id);
     }
@@ -369,7 +381,13 @@ async function main() {
 
     await client.query("COMMIT");
     console.log(`Seeded ${STAFF.length} staff users and ${CLIENTS.length} TESTCLIENT families.`);
-    console.log(`Dev login: any of ${STAFF.map((s) => s.email).join(", ")} / password "${DEV_PASSWORD}"`);
+    // Never echo the real password into logs on a deployed instance -
+    // only the local dev default is safe to print, since it's already
+    // public (it's committed in this file).
+    const loginHint = process.env.SEED_PASSWORD
+      ? "password is whatever SEED_PASSWORD was set to for this run"
+      : `password "${DEV_PASSWORD}"`;
+    console.log(`Login: any of ${STAFF.map((s) => s.email).join(", ")} / ${loginHint}`);
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;

@@ -59,7 +59,14 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       reply.setCookie(SESSION_COOKIE, token, {
         httpOnly: true,
         secure: env.NODE_ENV === "production",
-        sameSite: "lax",
+        // The deployed web and api sites live on different Render
+        // hostnames, so this is a cross-site request from the browser's
+        // point of view - SameSite=Lax would silently drop the cookie on
+        // every fetch() call after login (Lax only rides along on
+        // top-level navigations). None requires Secure, which is already
+        // conditional on production above; locally (http, same-site
+        // localhost ports) Lax stays correct and doesn't need Secure.
+        sameSite: env.NODE_ENV === "production" ? "none" : "lax",
         path: "/",
         expires: expiresAt,
       });
