@@ -36,7 +36,16 @@ services:
     # command here: seed.ts truncates the domain tables, which would wipe
     # real data on every single deploy. Seeding is a deliberate one-time
     # manual step - see the walkthrough.
-    buildCommand: npm ci && npm run build --workspace api && npm run migrate --workspace api
+    #
+    # --include=dev: NODE_ENV=production is set below (needed at runtime
+    # for secure cookies/SSL), but it's also visible to this build step,
+    # and plain `npm ci` treats that as a signal to skip devDependencies
+    # entirely - which silently drops @types/node and typescript itself,
+    # since both are devDependencies. Without them tsc either can't run
+    # at all or runs without Node's ambient types (Buffer, fetch,
+    # process, console...), which is exactly the failure this caused.
+    # --include=dev forces devDependencies in regardless of NODE_ENV.
+    buildCommand: npm ci --include=dev && npm run build --workspace api && npm run migrate --workspace api
     startCommand: npm run start --workspace api
     healthCheckPath: /health
     envVars:
