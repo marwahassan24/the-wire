@@ -1,0 +1,78 @@
+# Render Blueprint for The Wire. Deploy via the Render dashboard:
+# New -> Blueprint -> connect this repo -> Render reads this file and
+# proposes the database + two services below for review before creating
+# anything. See the walkthrough in the PR/commit message for the manual
+# steps (SEED_PASSWORD, one-time seeding, checking the assigned hostnames).
+#
+# Free plan notes, read before relying on this long-term:
+#   - the-wire-db (free Postgres) expires 30 days after creation, then a
+#     14-day grace period, then Render deletes it. Upgrade its plan in the
+#     dashboard before that if this needs to stick around - a plan change
+#     doesn't need this file touched or a redeploy.
+#   - the-wire-api (free web service) spins down after 15 minutes idle and
+#     cold-starts (tens of seconds) on the next request. Fine for a small
+#     team tool; upgrade the plan if that delay becomes annoying.
+#   - the-wire-web (static site) has no spin-down - it's served directly,
+#     not a running process.
+
+databases:
+  - name: the-wire-db
+    databaseName: the_wire
+    plan: free
+    postgresMajorVersion: "16"
+
+services:
+  - type: web
+    name: the-wire-api
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm ci && npm run build --workspace api
+    # Runs after build, before the new instance takes traffic. Safe to run
+    # on every deploy - node-pg-migrate only applies migrations it hasn't
+    # already recorded as run. Never put the seed command here: seed.ts
+    # truncates the domain tables, which would wipe real data on every
+    # single deploy. Seeding is a deliberate one-time manual step - see
+    # the walkthrough.
+    preDeployCommand: npm run migrate --workspace api
+    startCommand: npm run start --workspace api
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: the-wire-db
+          property: connectionString
+      # If Render assigns the-wire-web a different hostname (this exact
+      # name was already taken), update this to match before anyone tries
+      # to log in - a mismatched WEB_ORIGIN means CORS blocks every
+      # request from the real web origin.
+      - key: WEB_ORIGIN
+        value: https://the-wire-web.onrender.com
+      # Entered once during Blueprint creation (Render prompts for any
+      # envVar marked sync: false) - never stored in this file or in git.
+      # Used only by `npm run seed`, which is never run automatically.
+      - key: SEED_PASSWORD
+        sync: false
+
+  - type: web
+    name: the-wire-web
+    runtime: static
+    plan: free
+    region: oregon
+    buildCommand: npm ci && npm run build --workspace web
+    staticPublishPath: web/dist
+    routes:
+      # Client-side routing (react-router) - any path that isn't a real
+      # static file falls back to index.html.
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      # Vite bakes VITE_-prefixed vars into the build at build time, not
+      # read at runtime - if the-wire-api's hostname ever changes, this
+      # needs a rebuild (a manual deploy of this service), not just an
+      # env var update.
+      - key: VITE_API_URL
+        value: https://the-wire-api.onrender.com
