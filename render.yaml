@@ -27,14 +27,16 @@ services:
     runtime: node
     plan: free
     region: oregon
-    buildCommand: npm ci && npm run build --workspace api
-    # Runs after build, before the new instance takes traffic. Safe to run
-    # on every deploy - node-pg-migrate only applies migrations it hasn't
-    # already recorded as run. Never put the seed command here: seed.ts
-    # truncates the domain tables, which would wipe real data on every
-    # single deploy. Seeding is a deliberate one-time manual step - see
-    # the walkthrough.
-    preDeployCommand: npm run migrate --workspace api
+    # preDeployCommand isn't available on the free plan, so the migration
+    # runs as the last build step instead - functionally the same place
+    # in the pipeline (still before the new instance takes traffic), just
+    # categorised as "build" here rather than a dedicated pre-deploy
+    # phase. Safe to run on every deploy - node-pg-migrate only applies
+    # migrations it hasn't already recorded as run. Never put the seed
+    # command here: seed.ts truncates the domain tables, which would wipe
+    # real data on every single deploy. Seeding is a deliberate one-time
+    # manual step - see the walkthrough.
+    buildCommand: npm ci && npm run build --workspace api && npm run migrate --workspace api
     startCommand: npm run start --workspace api
     healthCheckPath: /health
     envVars:
@@ -60,7 +62,6 @@ services:
     name: the-wire-web
     runtime: static
     plan: free
-    region: oregon
     buildCommand: npm ci && npm run build --workspace web
     staticPublishPath: web/dist
     routes:
