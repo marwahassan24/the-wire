@@ -51,6 +51,20 @@ interface SeedClient {
   meetingNotes: { date: string; type: string; text: string }[];
   portfolio: { summary: string; logs: { date: string; text: string }[] };
   tasks: { text: string; owner: StaffName; due: string; status: string }[];
+  // Hand-written sample holdings, standing in for real moneyinfo sync
+  // output (that's the last build step, not done yet) so the asset-
+  // allocation chart on the client page has something real to render.
+  // assetClass deliberately includes one non-canonical value (Margaret's
+  // "Alternatives") to exercise the chart's "Other" fallback bucket, not
+  // just the four named categories.
+  holdings: {
+    source: "plan" | "investment" | "account";
+    provider: string;
+    planType: string;
+    holdingName: string;
+    assetClass: string;
+    value: number;
+  }[];
 }
 
 const CLIENTS: SeedClient[] = [
@@ -103,6 +117,14 @@ const CLIENTS: SeedClient[] = [
       { text: "Confirm care fee DD position with provider before Annual", owner: "Louise", due: "2026-07-28", status: "confirmed" },
       { text: "Draft info request message to client for Annual", owner: "Louise", due: "2026-07-21", status: "sense" },
     ],
+    holdings: [
+      { source: "account", provider: "Fidelity", planType: "GIA", holdingName: "General Investment Account (Chris)", assetClass: "Equity", value: 138500 },
+      { source: "plan", provider: "Fidelity", planType: "ISA", holdingName: "Stocks & Shares ISA (Chris)", assetClass: "Equity", value: 74200 },
+      { source: "plan", provider: "Fidelity", planType: "ISA", holdingName: "Stocks & Shares ISA (Helen)", assetClass: "Equity", value: 71800 },
+      { source: "investment", provider: "RJIS", planType: "Discretionary Managed", holdingName: "Discretionary Portfolio", assetClass: "Fixed Income", value: 96000 },
+      { source: "account", provider: "JB Wealth", planType: "GIA", holdingName: "General Investment Account (regular withdrawal)", assetClass: "Fixed Income", value: 112300 },
+      { source: "account", provider: "Barclays", planType: "Cash Savings", holdingName: "Cash Reserve (18 months)", assetClass: "Cash", value: 63000 },
+    ],
   },
   {
     firstNames: "Aaron",
@@ -145,6 +167,13 @@ const CLIENTS: SeedClient[] = [
       logs: [{ date: "2026-04-08", text: "ISA subscription 2026/27 completed." }],
     },
     tasks: [{ text: "Chase share scheme booklet", owner: "Sarah", due: "2026-08-01", status: "confirmed" }],
+    holdings: [
+      { source: "plan", provider: "Scottish Widows", planType: "Workplace Pension", holdingName: "Workplace Pension", assetClass: "Equity", value: 68400 },
+      { source: "plan", provider: "AJ Bell", planType: "SIPP", holdingName: "Self-Invested Personal Pension", assetClass: "Equity", value: 41200 },
+      { source: "investment", provider: "AJ Bell", planType: "SIPP", holdingName: "Fixed Income Sleeve", assetClass: "Fixed Income", value: 12800 },
+      { source: "plan", provider: "Vanguard", planType: "ISA", holdingName: "Stocks & Shares ISA (maxed 2025/26)", assetClass: "Equity", value: 28600 },
+      { source: "account", provider: "Monzo", planType: "Cash Savings", holdingName: "Emergency Fund", assetClass: "Cash", value: 9500 },
+    ],
   },
   {
     firstNames: "Margaret",
@@ -190,6 +219,13 @@ const CLIENTS: SeedClient[] = [
       { text: "Prepare gifting options (JISA vs direct) for Interim", owner: "Jeremy", due: "2026-07-27", status: "confirmed" },
       { text: "Add sister situation to vulnerability watch-list - sense check with adviser", owner: "Louise", due: "2026-07-22", status: "sense" },
     ],
+    holdings: [
+      { source: "investment", provider: "RJIS", planType: "Discretionary Managed", holdingName: "Discretionary Portfolio", assetClass: "Equity", value: 210000 },
+      { source: "investment", provider: "RJIS", planType: "Discretionary Managed", holdingName: "Fixed Income Sleeve", assetClass: "Fixed Income", value: 95000 },
+      { source: "investment", provider: "TIME Investments", planType: "Property Fund", holdingName: "Legacy Property Fund", assetClass: "Property", value: 48000 },
+      { source: "account", provider: "NS&I", planType: "Cash Savings", holdingName: "Premium Bonds & Cash", assetClass: "Cash", value: 34500 },
+      { source: "investment", provider: "Octopus", planType: "EIS", holdingName: "IHT-Qualifying EIS Portfolio", assetClass: "Alternatives", value: 22000 },
+    ],
   },
 ];
 
@@ -201,8 +237,8 @@ async function main() {
     // Dev-only reset so this script can be re-run after schema changes.
     await client.query(`
       TRUNCATE
-        audit_log, case_events, cases, tasks, portfolio_log, portfolio_summary,
-        meeting_notes, points, soft_facts, clients, sessions, users
+        audit_log, case_events, cases, tasks, portfolio_holdings, portfolio_log,
+        portfolio_summary, meeting_notes, points, soft_facts, clients, sessions, users
       RESTART IDENTITY CASCADE
     `);
 
@@ -285,6 +321,17 @@ async function main() {
           `INSERT INTO portfolio_log (client_id, entry_date, text, author_id)
            VALUES ($1, $2, $3, $4)`,
           [clientId, log.date, log.text, cmId]
+        );
+      }
+
+      // moneyinfo_holding_id stays NULL and raw marks these as hand-seeded -
+      // they never came from a real sync, so there's nothing to link back to.
+      for (const h of c.holdings) {
+        await client.query(
+          `INSERT INTO portfolio_holdings
+             (client_id, moneyinfo_holding_id, source, provider, plan_type, holding_name, asset_class, value, currency, as_of_date, raw)
+           VALUES ($1, NULL, $2, $3, $4, $5, $6, $7, 'GBP', $8, $9)`,
+          [clientId, h.source, h.provider, h.planType, h.holdingName, h.assetClass, h.value, c.lastReview, JSON.stringify({ seed: true })]
         );
       }
 

@@ -8,3 +8,7 @@ export function fmtBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+export function fmtGBP(n: number): string {
+  return `£${Math.round(n).toLocaleString("en-GB")}`;
+}

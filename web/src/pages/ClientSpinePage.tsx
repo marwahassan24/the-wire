@@ -7,6 +7,7 @@ import type { Attachment, ClientSpine, Point } from "../types.js";
 import { Card, Pill, SectionHeading } from "../components/ui.js";
 import { PointsSection } from "../components/PointsSection.js";
 import { AttachmentsSection } from "../components/AttachmentsSection.js";
+import { AssetAllocation } from "../components/AssetAllocation.js";
 
 export function ClientSpinePage() {
   const { id } = useParams<{ id: string }>();
@@ -92,6 +93,7 @@ export function ClientSpinePage() {
 
         <Card>
           <SectionHeading>4. Portfolio detail</SectionHeading>
+          <AssetAllocation holdings={client.portfolio.holdings} />
           <div style={{ fontSize: C.text.body, lineHeight: 1.6, marginBottom: client.portfolio.logs.length ? 20 : 0 }}>
             {client.portfolio.summary || <Empty />}
           </div>
