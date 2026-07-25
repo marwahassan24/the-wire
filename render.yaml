@@ -61,7 +61,6 @@ services:
   - type: web
     name: the-wire-web
     runtime: static
-    plan: free
     buildCommand: npm ci && npm run build --workspace web
     staticPublishPath: web/dist
     routes:
