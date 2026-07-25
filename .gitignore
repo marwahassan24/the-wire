@@ -2,7 +2,11 @@ node_modules/
 dist/
 .env
 *.log
+*.tsbuildinfo
 .DS_Store
 
 # moneyinfo sync output — local artifacts, never committed
 wire-sync-output/
+
+# uploaded attachment files — local-disk storage backend, never committed
+uploads/

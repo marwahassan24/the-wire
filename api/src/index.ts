@@ -1,13 +1,7 @@
-import Fastify from "fastify";
+import { buildApp } from "./app.js";
 import { env } from "./env.js";
-import { pool } from "./db.js";
 
-const app = Fastify({ logger: true });
-
-app.get("/health", async () => {
-  const { rows } = await pool.query<{ ok: number }>("select 1 as ok");
-  return { status: "ok", db: rows[0].ok === 1 };
-});
+const app = await buildApp();
 
 app
   .listen({ port: env.PORT, host: "0.0.0.0" })

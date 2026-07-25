@@ -10,11 +10,20 @@
     "typecheck": "tsc --noEmit",
     "migrate": "dotenv -e ../.env -- node-pg-migrate up",
     "migrate:down": "dotenv -e ../.env -- node-pg-migrate down",
-    "migrate:create": "node-pg-migrate create"
+    "migrate:create": "node-pg-migrate create",
+    "seed": "tsx src/seed.ts",
+    "sync:moneyinfo": "tsx src/sync/runMoneyInfoSync.ts",
+    "test": "NODE_ENV=test tsx --test src/**/*.test.ts"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.1.2",
+    "@fastify/cors": "^11.3.0",
+    "@fastify/multipart": "^10.1.0",
+    "@fastify/rate-limit": "^11.1.0",
+    "argon2": "^0.45.0",
     "dotenv": "^16.4.5",
     "fastify": "^5.1.0",
+    "fastify-plugin": "^6.0.0",
     "pg": "^8.13.1"
   },
   "devDependencies": {
