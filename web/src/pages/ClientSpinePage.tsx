@@ -3,11 +3,12 @@ import { Link, useParams } from "react-router-dom";
 import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
-import type { Attachment, ClientSpine, Point } from "../types.js";
+import type { Attachment, ClientSpine, Point, SoftFact } from "../types.js";
 import { Card, Pill, SectionHeading } from "../components/ui.js";
 import { PointsSection } from "../components/PointsSection.js";
 import { AttachmentsSection } from "../components/AttachmentsSection.js";
 import { AssetAllocation } from "../components/AssetAllocation.js";
+import { SoftFactsSection } from "../components/SoftFactsSection.js";
 
 export function ClientSpinePage() {
   const { id } = useParams<{ id: string }>();
@@ -54,20 +55,11 @@ export function ClientSpinePage() {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-        <Card>
-          <SectionHeading>1. Soft facts</SectionHeading>
-          {client.softFacts.length === 0 && <Empty />}
-          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-            {client.softFacts.map((f) => (
-              <div key={f.id}>
-                <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 4 }}>
-                  {fmtDate(f.fact_date)}
-                </div>
-                <div style={{ fontSize: C.text.body, lineHeight: 1.6 }}>{f.text}</div>
-              </div>
-            ))}
-          </div>
-        </Card>
+        <SoftFactsSection
+          clientId={client.id}
+          softFacts={client.softFacts}
+          onChange={(softFacts: SoftFact[]) => setClient({ ...client, softFacts })}
+        />
 
         <PointsSection
           clientId={client.id}
