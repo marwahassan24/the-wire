@@ -1,0 +1,81 @@
+name: CI
+
+# Build, typecheck and test on every push and PR. The test suite is
+# DB-backed (the route tests insert into a migrated schema), so a Postgres
+# 16 service is spun up and migrations are run before the tests.
+on:
+  push:
+  pull_request:
+
+# A newer push to the same branch cancels an in-flight run for it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: wire
+          POSTGRES_PASSWORD: wire_ci_password
+          POSTGRES_DB: the_wire_test
+        ports:
+          - 5432:5432
+        # Don't let steps start until Postgres is actually accepting
+        # connections, otherwise the migrate step races the container.
+        options: >-
+          --health-cmd "pg_isready -U wire -d the_wire_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      # Both the migrate step and the app read DATABASE_URL. localhost works
+      # because the service port is published to the runner host.
+      DATABASE_URL: postgresql://wire:wire_ci_password@localhost:5432/the_wire_test
+      # Quietens the Fastify logger in tests and keeps secure-cookie/SSL
+      # production behaviour off. NOT 'production' — npm would then skip
+      # devDependencies (typescript, @types/*, tsx) and the build/tests
+      # couldn't run. This is the same trap called out in render.yaml.
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Write .env for the migrate script
+        # `npm run migrate` runs `dotenv -e ../.env -- node-pg-migrate up`,
+        # which expects a root .env. Generate one from the CI env rather
+        # than committing it (.env is gitignored).
+        run: |
+          cat > .env <<'EOF'
+          DATABASE_URL=postgresql://wire:wire_ci_password@localhost:5432/the_wire_test
+          NODE_ENV=test
+          EOF
+
+      - name: Run migrations
+        run: npm run migrate
+
+      - name: Typecheck (api + web)
+        run: |
+          npm run typecheck --workspace api
+          npm run typecheck --workspace web
+
+      - name: Build (api + web)
+        run: |
+          npm run build --workspace api
+          npm run build --workspace web
+
+      - name: Test (api, DB-backed)
+        run: npm test
