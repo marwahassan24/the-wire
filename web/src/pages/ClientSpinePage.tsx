@@ -3,13 +3,15 @@ import { Link, useParams } from "react-router-dom";
 import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
-import type { Attachment, ClientSpine, MeetingNote, Point, SoftFact } from "../types.js";
-import { Card, Pill, SectionHeading } from "../components/ui.js";
+import type { Attachment, ClientSpine, MeetingNote, Point, Portfolio, SoftFact } from "../types.js";
+import { Pill } from "../components/ui.js";
 import { PointsSection } from "../components/PointsSection.js";
 import { AttachmentsSection } from "../components/AttachmentsSection.js";
-import { AssetAllocation } from "../components/AssetAllocation.js";
 import { SoftFactsSection } from "../components/SoftFactsSection.js";
 import { MeetingNoteSection } from "../components/MeetingNoteSection.js";
+import { PortfolioSection } from "../components/PortfolioSection.js";
+import { TasksSection } from "../components/TasksSection.js";
+import { CasesSection } from "../components/CasesSection.js";
 
 export function ClientSpinePage() {
   const { id } = useParams<{ id: string }>();
@@ -80,34 +82,22 @@ export function ClientSpinePage() {
           onChange={(meetingNotes: MeetingNote[]) => setClient({ ...client, meetingNotes })}
         />
 
-        <Card>
-          <SectionHeading>4. Portfolio detail</SectionHeading>
-          <AssetAllocation holdings={client.portfolio.holdings} />
-          <div style={{ fontSize: C.text.body, lineHeight: 1.6, marginBottom: client.portfolio.logs.length ? 20 : 0 }}>
-            {client.portfolio.summary || <Empty />}
-          </div>
-          {client.portfolio.logs.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {client.portfolio.logs.map((l) => (
-                <div key={l.id} style={{ fontSize: C.text.small, display: "flex", gap: 12 }}>
-                  <span style={{ color: C.inkSoft, flexShrink: 0 }}>{fmtDate(l.entry_date)}</span>
-                  <span style={{ color: C.ink }}>{l.text}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
+        <PortfolioSection
+          clientId={client.id}
+          portfolio={client.portfolio}
+          onChange={(portfolio: Portfolio) => setClient({ ...client, portfolio })}
+        />
 
         <AttachmentsSection
           clientId={client.id}
           attachments={client.attachments}
           onChange={(attachments: Attachment[]) => setClient({ ...client, attachments })}
         />
+
+        <TasksSection clientId={client.id} />
+
+        <CasesSection clientId={client.id} />
       </div>
     </div>
   );
-}
-
-function Empty() {
-  return <div style={{ fontSize: C.text.small, color: C.inkSoft }}>Nothing here yet.</div>;
 }
