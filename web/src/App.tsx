@@ -5,6 +5,8 @@ import { Layout } from "./components/Layout.js";
 import { LoginPage } from "./pages/LoginPage.js";
 import { ClientsListPage } from "./pages/ClientsListPage.js";
 import { ClientSpinePage } from "./pages/ClientSpinePage.js";
+import { NewClientPage } from "./pages/NewClientPage.js";
+import { EditClientPage } from "./pages/EditClientPage.js";
 import { PrepPage } from "./pages/PrepPage.js";
 import { TasksPage } from "./pages/TasksPage.js";
 import { SearchPage } from "./pages/SearchPage.js";
@@ -40,10 +42,26 @@ export default function App() {
             }
           />
           <Route
+            path="/clients/new"
+            element={
+              <RequireAuth>
+                <NewClientPage />
+              </RequireAuth>
+            }
+          />
+          <Route
             path="/clients/:id"
             element={
               <RequireAuth>
                 <ClientSpinePage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/clients/:id/edit"
+            element={
+              <RequireAuth>
+                <EditClientPage />
               </RequireAuth>
             }
           />

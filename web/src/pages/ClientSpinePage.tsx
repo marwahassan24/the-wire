@@ -40,12 +40,20 @@ export function ClientSpinePage() {
           </div>
           <Pill tone={client.status === "Working" ? "primary" : "plain"}>{client.status}</Pill>
         </div>
-        <Link
-          to={`/clients/${client.id}/prep`}
-          style={{ fontSize: C.text.small, color: C.primary, textDecoration: "none", fontWeight: 600 }}
-        >
-          Prep view →
-        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+          <Link
+            to={`/clients/${client.id}/edit`}
+            style={{ fontSize: C.text.small, color: C.inkSoft, textDecoration: "none", fontWeight: 600 }}
+          >
+            Edit
+          </Link>
+          <Link
+            to={`/clients/${client.id}/prep`}
+            style={{ fontSize: C.text.small, color: C.primary, textDecoration: "none", fontWeight: 600 }}
+          >
+            Prep view →
+          </Link>
+        </div>
       </div>
       <div style={{ fontSize: C.text.small, color: C.inkSoft, marginTop: 6, marginBottom: 32 }}>
         {client.review_cycle} cycle

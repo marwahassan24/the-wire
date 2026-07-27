@@ -212,6 +212,12 @@ export interface OpsDashboard {
   workload: OpsWorkload[];
 }
 
+export interface StaffUser {
+  id: number;
+  name: string;
+  role: "adviser" | "client_manager" | "admin";
+}
+
 export interface SearchResult {
   entity_type: "soft_fact" | "point" | "meeting_note" | "portfolio_summary";
   entity_id: number;

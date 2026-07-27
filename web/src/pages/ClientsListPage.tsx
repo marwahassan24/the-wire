@@ -4,7 +4,7 @@ import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
 import type { ClientSummary } from "../types.js";
-import { Card, Input, Pill } from "../components/ui.js";
+import { Btn, Card, Input, Pill } from "../components/ui.js";
 
 export function ClientsListPage() {
   const [clients, setClients] = useState<ClientSummary[] | null>(null);
@@ -25,7 +25,14 @@ export function ClientsListPage() {
 
   return (
     <div>
-      <div style={{ fontWeight: 700, fontSize: C.text.title, marginBottom: 24 }}>Clients</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div style={{ fontWeight: 700, fontSize: C.text.title }}>Clients</div>
+        <Link to="/clients/new" style={{ textDecoration: "none" }}>
+          <Btn tone="ink" small>
+            + New client
+          </Btn>
+        </Link>
+      </div>
       <Input
         placeholder="Search by name or email…"
         value={q}
