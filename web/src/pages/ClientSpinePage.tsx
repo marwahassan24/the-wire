@@ -3,12 +3,13 @@ import { Link, useParams } from "react-router-dom";
 import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
-import type { Attachment, ClientSpine, Point, SoftFact } from "../types.js";
+import type { Attachment, ClientSpine, MeetingNote, Point, SoftFact } from "../types.js";
 import { Card, Pill, SectionHeading } from "../components/ui.js";
 import { PointsSection } from "../components/PointsSection.js";
 import { AttachmentsSection } from "../components/AttachmentsSection.js";
 import { AssetAllocation } from "../components/AssetAllocation.js";
 import { SoftFactsSection } from "../components/SoftFactsSection.js";
+import { MeetingNoteSection } from "../components/MeetingNoteSection.js";
 
 export function ClientSpinePage() {
   const { id } = useParams<{ id: string }>();
@@ -26,8 +27,6 @@ export function ClientSpinePage() {
 
   if (error) return <div style={{ color: C.red, fontSize: C.text.small }}>{error}</div>;
   if (!client) return <div style={{ color: C.inkSoft, fontSize: C.text.small }}>Loading…</div>;
-
-  const latestNote = client.meetingNotes[0];
 
   return (
     <div>
@@ -67,21 +66,11 @@ export function ClientSpinePage() {
           onChange={(points: Point[]) => setClient({ ...client, points })}
         />
 
-        <Card>
-          <SectionHeading>3. Meeting note (client-visible)</SectionHeading>
-          {!latestNote && <Empty />}
-          {latestNote && (
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                <span style={{ fontSize: C.text.small, color: C.inkSoft }}>
-                  {latestNote.meeting_type} · {fmtDate(latestNote.meeting_date)}
-                </span>
-                <Pill tone={latestNote.status === "approved" ? "primary" : "amber"}>{latestNote.status}</Pill>
-              </div>
-              <div style={{ fontSize: C.text.body, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{latestNote.body}</div>
-            </div>
-          )}
-        </Card>
+        <MeetingNoteSection
+          clientId={client.id}
+          meetingNotes={client.meetingNotes}
+          onChange={(meetingNotes: MeetingNote[]) => setClient({ ...client, meetingNotes })}
+        />
 
         <Card>
           <SectionHeading>4. Portfolio detail</SectionHeading>
