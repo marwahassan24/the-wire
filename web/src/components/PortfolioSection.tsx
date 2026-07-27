@@ -25,6 +25,11 @@ export function PortfolioSection({
   const [addingLog, setAddingLog] = useState(false);
   const [logError, setLogError] = useState<string | null>(null);
 
+  const summaryLines = portfolio.summary
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
   async function saveSummary() {
     setSavingSummary(true);
     setSummaryError(null);
@@ -74,8 +79,14 @@ export function PortfolioSection({
 
       {!editingSummary && (
         <div>
-          <div style={{ fontSize: C.text.body, lineHeight: 1.6, marginBottom: 10 }}>
-            {portfolio.summary || (
+          <div style={{ marginBottom: 10 }}>
+            {summaryLines.length > 0 ? (
+              <ul style={{ margin: 0, paddingLeft: 20, fontSize: C.text.body, lineHeight: 1.6, color: C.ink }}>
+                {summaryLines.map((line, i) => (
+                  <li key={i}>{line}</li>
+                ))}
+              </ul>
+            ) : (
               <span style={{ fontSize: C.text.small, color: C.inkSoft }}>Nothing here yet.</span>
             )}
           </div>

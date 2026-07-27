@@ -119,7 +119,8 @@ const CLIENTS: SeedClient[] = [
       },
     ],
     portfolio: {
-      summary: "Fidelity GIA + ISAs, RJIS discretionary. Cash buffer 18 months' spending. Regular withdrawal £3,500/m from JB GIA. CGT realised YTD £4,100 of £3,000 allowance - watch. Voyant refreshed May 2026.",
+      summary:
+        "Fidelity GIA + ISAs, RJIS discretionary.\nCash buffer 18 months' spending.\nRegular withdrawal £3,500/m from JB GIA.\nCGT realised YTD £4,100 of £3,000 allowance - watch.\nVoyant refreshed May 2026.",
       logs: [
         { date: "2026-06-28", text: "£20k withdrawal sent from JB GIA (house fund top-up)." },
         { date: "2026-04-14", text: "ISA subscriptions completed for both, 2026/27." },
@@ -175,7 +176,8 @@ const CLIENTS: SeedClient[] = [
       },
     ],
     portfolio: {
-      summary: "Workplace pension + SIPP, S&S ISA maxed 25/26. No GIA. Annual allowance headroom depends on new package - flagged in Points.",
+      summary:
+        "Workplace pension + SIPP, S&S ISA maxed 25/26.\nNo GIA.\nAnnual allowance headroom depends on new package - flagged in Points.",
       logs: [{ date: "2026-04-08", text: "ISA subscription 2026/27 completed." }],
     },
     tasks: [{ text: "Chase share scheme booklet", owner: "Sarah", due: "2026-08-01", status: "confirmed" }],
@@ -224,7 +226,8 @@ const CLIENTS: SeedClient[] = [
       },
     ],
     portfolio: {
-      summary: "RJIS discretionary + cash. Income comfortably covered by pensions; portfolio is legacy-oriented. IHT position reviewed Jan 2026 - within NRB + RNRB with current gifting plan.",
+      summary:
+        "RJIS discretionary + cash.\nIncome comfortably covered by pensions - portfolio is legacy-oriented.\nIHT position reviewed Jan 2026 - within NRB + RNRB with current gifting plan.",
       logs: [],
     },
     tasks: [
