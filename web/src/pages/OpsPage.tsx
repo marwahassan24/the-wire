@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
-import type { OpsDashboard } from "../types.js";
-import { Card, Pill, SectionHeading } from "../components/ui.js";
+import type { OpsCase, OpsDashboard } from "../types.js";
+import { Btn, Card, Pill, SectionHeading } from "../components/ui.js";
 
 function Stat({ n, label, tone }: { n: number; label: string; tone?: string }) {
   return (
@@ -25,11 +25,15 @@ export function OpsPage() {
   const [dashboard, setDashboard] = useState<OpsDashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    api
+  function loadDashboard() {
+    return api
       .get<OpsDashboard>("/api/ops/dashboard")
       .then(setDashboard)
       .catch(() => setError("Couldn't load the operations dashboard."));
+  }
+
+  useEffect(() => {
+    loadDashboard();
   }, []);
 
   if (error) return <div style={{ color: C.red, fontSize: C.text.small }}>{error}</div>;
@@ -115,7 +119,7 @@ export function OpsPage() {
           marginBottom: 36,
         }}
       >
-        {pipeline.map(({ stage, count, cases }) => (
+        {pipeline.map(({ stage, count, cases }, stageIndex) => (
           <Card key={stage} style={{ padding: 18, opacity: count ? 1 : 0.7 }}>
             <div
               style={{
@@ -132,21 +136,13 @@ export function OpsPage() {
             </div>
             {count === 0 && <Empty text="Nothing here." />}
             {cases.map((k) => (
-              <div key={k.id} style={{ borderTop: `1px solid ${C.line}`, paddingTop: 12, marginTop: 12 }}>
-                <Link
-                  to={`/clients/${k.client_id}`}
-                  style={{ fontWeight: 600, fontSize: C.text.small, color: C.primary, textDecoration: "none" }}
-                >
-                  {k.client_first_names} {k.client_surname}
-                </Link>
-                <div style={{ fontSize: C.text.small, margin: "4px 0 10px", lineHeight: 1.5 }}>{k.title}</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                  {k.waiting_on && <Pill tone="plain">with {k.waiting_on}</Pill>}
-                  {stage !== "Completed" && k.idle_days > 14 && (
-                    <Pill tone="red">stalled {k.idle_days}d</Pill>
-                  )}
-                </div>
-              </div>
+              <CaseCard
+                key={k.id}
+                kase={k}
+                stage={stage}
+                nextStage={pipeline[stageIndex + 1]?.stage}
+                onAdvanced={loadDashboard}
+              />
             ))}
           </Card>
         ))}
@@ -201,4 +197,59 @@ export function OpsPage() {
 
 function Empty({ text }: { text: string }) {
   return <div style={{ fontSize: C.text.small, color: C.inkSoft }}>{text}</div>;
+}
+
+function CaseCard({
+  kase,
+  stage,
+  nextStage,
+  onAdvanced,
+}: {
+  kase: OpsCase;
+  stage: string;
+  nextStage: string | undefined;
+  onAdvanced: () => Promise<void>;
+}) {
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function advance() {
+    if (!nextStage) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await api.patch(`/api/cases/${kase.id}`, { stage: nextStage });
+      // Re-fetch the whole dashboard rather than hand-patching pipeline
+      // counts and stats (liveCases, stalledCases, etc.) locally - those
+      // are all derived server-side from the same case list, and trying
+      // to keep every derived number in sync client-side is exactly the
+      // kind of thing that quietly drifts wrong.
+      await onAdvanced();
+    } catch {
+      setError("Couldn't advance that case.");
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 12, marginTop: 12 }}>
+      <Link
+        to={`/clients/${kase.client_id}`}
+        style={{ fontWeight: 600, fontSize: C.text.small, color: C.primary, textDecoration: "none" }}
+      >
+        {kase.client_first_names} {kase.client_surname}
+      </Link>
+      <div style={{ fontSize: C.text.small, margin: "4px 0 10px", lineHeight: 1.5 }}>{kase.title}</div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        {kase.waiting_on && <Pill tone="plain">with {kase.waiting_on}</Pill>}
+        {stage !== "Completed" && kase.idle_days > 14 && <Pill tone="red">stalled {kase.idle_days}d</Pill>}
+      </div>
+      {nextStage && (
+        <Btn tone="ghost" small disabled={submitting} onClick={advance} style={{ marginTop: 10 }}>
+          Advance → {nextStage}
+        </Btn>
+      )}
+      {error && <div style={{ fontSize: C.text.small, color: C.red, marginTop: 6 }}>{error}</div>}
+    </div>
+  );
 }

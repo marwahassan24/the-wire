@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, CSSProperties, InputHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, CSSProperties, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 import { theme as C } from "../theme.js";
 
 // A section heading inside a card: sentence case, body typeface, weight and
@@ -104,6 +104,30 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
         outline: "none",
         width: "100%",
         boxSizing: "border-box",
+        ...props.style,
+      }}
+    />
+  );
+}
+
+export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <textarea
+      {...props}
+      style={{
+        fontFamily: C.sans,
+        fontSize: C.text.body,
+        lineHeight: 1.6,
+        padding: "12px 14px",
+        borderRadius: 8,
+        border: `1px solid ${C.line}`,
+        background: "#fff",
+        color: C.ink,
+        outline: "none",
+        width: "100%",
+        boxSizing: "border-box",
+        minHeight: 140,
+        resize: "vertical",
         ...props.style,
       }}
     />
