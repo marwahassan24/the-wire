@@ -3,17 +3,35 @@ import { Link } from "react-router-dom";
 import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
-import type { ClientSummary } from "../types.js";
-import { Btn, Card, Input, Pill } from "../components/ui.js";
+import type { ClientSummary, StaffUser } from "../types.js";
+import { Btn, Card, Input, Pill, Select } from "../components/ui.js";
+
+const DECADES = [20, 30, 40, 50, 60, 70, 80, 90];
 
 export function ClientsListPage() {
   const [clients, setClients] = useState<ClientSummary[] | null>(null);
   const [q, setQ] = useState("");
+  const [decade, setDecade] = useState("");
+  const [status, setStatus] = useState("");
+  const [adviser, setAdviser] = useState("");
+  const [reviewDue, setReviewDue] = useState(false);
+  const [advisers, setAdvisers] = useState<StaffUser[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api
+      .get<StaffUser[]>("/api/users")
+      .then((all) => setAdvisers(all.filter((u) => u.role === "adviser")))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
+    if (decade) params.set("decade", decade);
+    if (status) params.set("status", status);
+    if (adviser) params.set("adviser", adviser);
+    if (reviewDue) params.set("review_due", "true");
     const handle = setTimeout(() => {
       api
         .get<ClientSummary[]>(`/api/clients?${params.toString()}`)
@@ -21,7 +39,7 @@ export function ClientsListPage() {
         .catch(() => setError("Couldn't load clients."));
     }, 200);
     return () => clearTimeout(handle);
-  }, [q]);
+  }, [q, decade, status, adviser, reviewDue]);
 
   return (
     <div>
@@ -37,8 +55,55 @@ export function ClientsListPage() {
         placeholder="Search by name or email…"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        style={{ marginBottom: 28, maxWidth: 400 }}
+        style={{ marginBottom: 16, maxWidth: 400 }}
       />
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 28 }}>
+        <Select value={decade} onChange={setDecade} placeholder="Any decade">
+          {DECADES.map((d) => (
+            <option key={d} value={d}>
+              {d}s
+            </option>
+          ))}
+        </Select>
+        <Select value={status} onChange={setStatus} placeholder="Any status">
+          <option value="Working">Working</option>
+          <option value="Retired">Retired</option>
+        </Select>
+        <Select value={adviser} onChange={setAdviser} placeholder="Any adviser">
+          {advisers.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name}
+            </option>
+          ))}
+        </Select>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: C.text.small,
+            color: C.inkSoft,
+            cursor: "pointer",
+          }}
+        >
+          <input type="checkbox" checked={reviewDue} onChange={(e) => setReviewDue(e.target.checked)} />
+          Review due
+        </label>
+        {(decade || status || adviser || reviewDue) && (
+          <Btn
+            tone="ghost"
+            small
+            onClick={() => {
+              setDecade("");
+              setStatus("");
+              setAdviser("");
+              setReviewDue(false);
+            }}
+          >
+            Clear filters
+          </Btn>
+        )}
+      </div>
       {error && <div style={{ color: C.red, fontSize: C.text.small }}>{error}</div>}
       {!clients && !error && <div style={{ color: C.inkSoft, fontSize: C.text.small }}>Loading…</div>}
       {clients && clients.length === 0 && (
