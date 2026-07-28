@@ -1,0 +1,179 @@
+name: Backup
+
+# Nightly dump of the production database, uploaded to S3-compatible
+# storage, immediately followed by a restore into a scratch Postgres
+# instance with sanity checks. This is what "tested restore" means here
+# (BUILD-BRIEF.md's Phase 1 definition of done): every backup gets
+# proven restorable on the same schedule it's made, not checked once by
+# hand and assumed to keep working.
+#
+# Requires these repository secrets (Settings -> Secrets and variables
+# -> Actions):
+#   PROD_DATABASE_URL          External connection string for
+#                                the-wire-db (Render dashboard ->
+#                                the-wire-db -> Connect -> External
+#                                Database URL).
+#   BACKUP_S3_BUCKET
+#   BACKUP_S3_ACCESS_KEY_ID
+#   BACKUP_S3_SECRET_ACCESS_KEY
+#   BACKUP_S3_REGION           e.g. eu-west-2 - any value works for
+#                                providers that ignore region.
+#   BACKUP_S3_ENDPOINT         Optional. Only for a non-AWS S3-compatible
+#                                provider (Cloudflare R2, Backblaze B2).
+#                                Leave unset (or the secret unset) for
+#                                real AWS S3.
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Ubuntu 24.04 (ubuntu-latest) ships Postgres 16 client tools by
+      # default, matching the server (render.yaml pins postgresMajorVersion
+      # to 16) - no need to build or pull a matching image.
+      - name: Install Postgres 16 client tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client-16
+
+      - name: Dump production database
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: |
+          mkdir -p out
+          scripts/backup.sh out/backup.sql.gz
+
+      # Captured as a separate query right after the dump rather than
+      # parsed out of it, which is simpler but leaves a small window
+      # where a write between the dump and this query could cause a
+      # one-off mismatch in the restore-test job below. Given how little
+      # this app is written to overnight, that's an acceptable trade for
+      # not having to parse pg_dump's COPY block format - a mismatch here
+      # is far more likely to mean "someone was using the app at 2am"
+      # than "the backup is broken," and is easy to tell apart by re-running.
+      - name: Record row counts for the restore check
+        run: |
+          psql -v ON_ERROR_STOP=1 -Atc "
+            select 'clients', count(*) from clients
+            union all select 'users', count(*) from users
+            union all select 'meeting_notes', count(*) from meeting_notes
+          " "${{ secrets.PROD_DATABASE_URL }}" > out/counts.txt
+          cat out/counts.txt
+
+      - name: Upload to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.BACKUP_S3_REGION }}
+          BACKUP_S3_ENDPOINT: ${{ secrets.BACKUP_S3_ENDPOINT }}
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+        run: |
+          endpoint_args=()
+          [ -n "$BACKUP_S3_ENDPOINT" ] && endpoint_args=(--endpoint-url "$BACKUP_S3_ENDPOINT")
+          aws s3 cp "${endpoint_args[@]}" out/backup.sql.gz \
+            "s3://$BACKUP_S3_BUCKET/the-wire/$(date -u +%Y/%m/%d)-backup.sql.gz"
+
+      - name: Prune backups older than 30 days
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.BACKUP_S3_REGION }}
+          BACKUP_S3_ENDPOINT: ${{ secrets.BACKUP_S3_ENDPOINT }}
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+        run: |
+          endpoint_args=()
+          [ -n "$BACKUP_S3_ENDPOINT" ] && endpoint_args=(--endpoint-url "$BACKUP_S3_ENDPOINT")
+          cutoff="$(date -u -d '30 days ago' +%Y-%m-%d)"
+          aws s3api list-objects-v2 "${endpoint_args[@]}" --bucket "$BACKUP_S3_BUCKET" --prefix the-wire/ \
+            --query "Contents[?LastModified<='${cutoff}'].Key" --output text \
+            | tr '\t' '\n' | grep -v '^$' \
+            | while read -r key; do
+                echo "Deleting old backup: $key"
+                aws s3 rm "${endpoint_args[@]}" "s3://$BACKUP_S3_BUCKET/$key"
+              done
+
+      # Handed to restore-test below via an artifact rather than having
+      # that job re-download from S3 - keeps the restore-test job from
+      # needing S3 credentials at all, and it's testing the exact bytes
+      # this job just produced, not a second read of the bucket.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backup-for-restore-test
+          path: out/
+          retention-days: 2
+
+  restore-test:
+    needs: backup
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: wire
+          POSTGRES_PASSWORD: wire_restore_test_password
+          POSTGRES_DB: the_wire_restore_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U wire -d the_wire_restore_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://wire:wire_restore_test_password@localhost:5432/the_wire_restore_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Postgres 16 client tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client-16
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: backup-for-restore-test
+          path: out/
+
+      - name: Restore the backup into a scratch database
+        run: scripts/restore.sh out/backup.sql.gz
+
+      - name: Verify the schema landed
+        run: |
+          missing=$(psql -v ON_ERROR_STOP=1 -Atc "
+            select t from unnest(array[
+              'users','sessions','clients','soft_facts','points','meeting_notes',
+              'portfolio_summary','portfolio_log','tasks','cases','case_events',
+              'audit_log','moneyinfo_raw_sync','portfolio_holdings','attachments',
+              'contact_log','outstanding_items','outstanding_item_chases'
+            ]) t
+            where t not in (select table_name from information_schema.tables where table_schema = 'public')
+          " "$DATABASE_URL")
+          if [ -n "$missing" ]; then
+            echo "Restore is missing expected tables: $missing" >&2
+            exit 1
+          fi
+          migration_count=$(psql -v ON_ERROR_STOP=1 -Atc "select count(*) from pgmigrations" "$DATABASE_URL")
+          if [ "$migration_count" -lt 1 ]; then
+            echo "pgmigrations is empty - restore did not bring in an applied schema" >&2
+            exit 1
+          fi
+          echo "Schema OK: all expected tables present, $migration_count migrations recorded."
+
+      - name: Verify row counts match what was dumped
+        run: |
+          psql -v ON_ERROR_STOP=1 -Atc "
+            select 'clients', count(*) from clients
+            union all select 'users', count(*) from users
+            union all select 'meeting_notes', count(*) from meeting_notes
+          " "$DATABASE_URL" > out/restored-counts.txt
+          if ! diff out/counts.txt out/restored-counts.txt; then
+            echo "Row counts in the restored database don't match the source dump - see the comment on the 'Record row counts' step in the backup job for the known small race window before treating this as a broken backup." >&2
+            exit 1
+          fi
+          echo "Row counts match the source dump:"
+          cat out/restored-counts.txt
