@@ -19,10 +19,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Client spine layout: a sticky section-nav sidebar beside the section
-   cards. Media queries can't be expressed as inline styles, so this one
-   responsive layout lives here rather than in the component's style
-   objects like everything else in the app. */
+/* Sticky section-nav sidebar beside a column of section cards, shared by
+   the client spine and prep pages. Media queries can't be expressed as
+   inline styles, so this one responsive layout lives here rather than in
+   the components' style objects like everything else in the app. */
 .spine-layout {
   display: flex;
   align-items: flex-start;
