@@ -18,10 +18,15 @@ export function TasksSection({
   clientId,
   open,
   onToggle,
+  onTaskStatusChanged,
 }: {
   clientId: number;
   open: boolean;
   onToggle: () => void;
+  // A confirmed/done task might be one a meeting note created - the note's
+  // own "Draft tasks from this note" list is a snapshot from when the
+  // client last loaded, so it wouldn't otherwise learn the status changed.
+  onTaskStatusChanged?: () => void;
 }) {
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [staff, setStaff] = useState<StaffUser[]>([]);
@@ -40,6 +45,7 @@ export function TasksSection({
   }
   function handleUpdated(updated: Task) {
     setTasks((prev) => prev?.map((t) => (t.id === updated.id ? updated : t)) ?? prev);
+    onTaskStatusChanged?.();
   }
 
   const openCount = tasks?.filter((t) => t.status !== "done").length ?? 0;
@@ -93,6 +99,7 @@ function TaskRow({ task, onUpdated }: { task: Task; onUpdated: (t: Task) => void
           <div style={{ fontSize: C.text.small, color: C.inkSoft, marginTop: 4 }}>
             {task.owner_name}
             {task.due_date && ` · due ${fmtDate(task.due_date)}`}
+            {task.source === "meeting_note" && " · from meeting note"}
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>

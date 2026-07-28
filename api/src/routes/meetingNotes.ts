@@ -1,8 +1,10 @@
 import type { FastifyPluginAsync } from "fastify";
+import type { PoolClient } from "pg";
 import { withTransaction } from "../db.js";
 import { recordAudit } from "../audit.js";
 import { friendlyConstraintMessage } from "../dbErrors.js";
 import { normalizeText } from "../textNormalize.js";
+import { extractActionLines, taskTextForAction } from "../meetingNoteActions.js";
 
 const createMeetingNoteSchema = {
   body: {
@@ -30,6 +32,70 @@ const patchMeetingNoteSchema = {
   },
 };
 
+// Turns a saved note's "TCFP:"/"Client:" lines into draft tasks, owned by
+// the client's CM by default. Every one lands awaiting_sense_check with
+// source='meeting_note' - the same gate every other automated producer
+// goes through (see tasks.ts's startsConfirmed check) - so this never
+// bypasses the human sense-check, it just feeds it. Dedupes against any
+// task already linked to this note by exact text, so re-saving an edited
+// draft doesn't recreate lines that already produced one.
+async function syncTasksFromNote(
+  tx: PoolClient,
+  clientId: number,
+  note: { id: number; body: string },
+  userId: number
+): Promise<void> {
+  const actions = extractActionLines(note.body);
+  if (actions.length === 0) return;
+
+  const { rows: clientRows } = await tx.query<{ cm_id: number }>(`SELECT cm_id FROM clients WHERE id = $1`, [
+    clientId,
+  ]);
+  const cmId = clientRows[0]?.cm_id;
+  if (!cmId) return;
+
+  const { rows: existingRows } = await tx.query<{ text: string }>(
+    `SELECT text FROM tasks WHERE meeting_note_id = $1`,
+    [note.id]
+  );
+  const existingTexts = new Set(existingRows.map((r) => r.text));
+
+  for (const action of actions) {
+    const text = normalizeText(taskTextForAction(action));
+    if (existingTexts.has(text)) continue;
+    existingTexts.add(text);
+
+    const { rows } = await tx.query(
+      `INSERT INTO tasks (client_id, text, owner_id, source, status, meeting_note_id)
+       VALUES ($1, $2, $3, 'meeting_note', 'awaiting_sense_check', $4)
+       RETURNING id, client_id, text, owner_id, due_date, status, source,
+                 confirmed_by, confirmed_at, meeting_note_id, created_at`,
+      [clientId, text, cmId, note.id]
+    );
+    const row = rows[0];
+    await recordAudit(tx, {
+      userId,
+      entityType: "task",
+      entityId: row.id,
+      action: "create",
+      before: null,
+      after: row,
+    });
+  }
+}
+
+async function tasksForNote(tx: PoolClient, noteId: number) {
+  const { rows } = await tx.query(
+    `SELECT t.id, t.text, t.status, t.owner_id, u.name AS owner_name
+       FROM tasks t
+       JOIN users u ON u.id = t.owner_id
+      WHERE t.meeting_note_id = $1 AND t.deleted_at IS NULL
+      ORDER BY t.created_at`,
+    [noteId]
+  );
+  return rows;
+}
+
 const meetingNotesRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post("/api/clients/:id/meeting-notes", { schema: createMeetingNoteSchema }, async (request, reply) => {
     const clientId = Number((request.params as { id: string }).id);
@@ -54,7 +120,10 @@ const meetingNotesRoutes: FastifyPluginAsync = async (fastify) => {
           before: null,
           after: row,
         });
-        return row;
+
+        await syncTasksFromNote(tx, clientId, row, userId);
+        const tasks = await tasksForNote(tx, row.id);
+        return { ...row, tasks };
       });
       reply.code(201);
       return created;
@@ -116,7 +185,8 @@ const meetingNotesRoutes: FastifyPluginAsync = async (fastify) => {
         }
 
         if (fields.length === 0) {
-          return { kind: "ok" as const, note: before };
+          const tasks = await tasksForNote(tx, id);
+          return { kind: "ok" as const, note: { ...before, tasks } };
         }
 
         values.push(id);
@@ -133,7 +203,12 @@ const meetingNotesRoutes: FastifyPluginAsync = async (fastify) => {
           before,
           after: updated,
         });
-        return { kind: "ok" as const, note: updated };
+
+        if (body.body !== undefined) {
+          await syncTasksFromNote(tx, updated.client_id, updated, userId);
+        }
+        const tasks = await tasksForNote(tx, id);
+        return { kind: "ok" as const, note: { ...updated, tasks } };
       });
 
       if (result.kind === "not_found") {

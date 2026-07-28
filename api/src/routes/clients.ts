@@ -200,6 +200,7 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
       portfolioHoldings,
       attachments,
       contactLog,
+      meetingNoteTasks,
     ] = await Promise.all([
         pool.query(`SELECT ${CLIENT_LIST_COLUMNS} FROM clients WHERE id = $1 AND deleted_at IS NULL`, [id]),
         pool.query(
@@ -256,6 +257,17 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
             ORDER BY cl.contact_date DESC, cl.created_at DESC`,
           [id]
         ),
+        // Tasks auto-created from a meeting note's TCFP:/Client: lines,
+        // grouped onto their note below - lets the Meeting note section
+        // show what it produced without a separate client-side fetch.
+        pool.query(
+          `SELECT t.id, t.meeting_note_id, t.text, t.status, t.owner_id, u.name AS owner_name
+             FROM tasks t
+             JOIN users u ON u.id = t.owner_id
+            WHERE t.client_id = $1 AND t.meeting_note_id IS NOT NULL AND t.deleted_at IS NULL
+            ORDER BY t.created_at`,
+          [id]
+        ),
       ]);
 
     if (clientResult.rows.length === 0) {
@@ -263,11 +275,18 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
       return;
     }
 
+    const tasksByNoteId = new Map<number, unknown[]>();
+    for (const task of meetingNoteTasks.rows) {
+      const list = tasksByNoteId.get(task.meeting_note_id) ?? [];
+      list.push(task);
+      tasksByNoteId.set(task.meeting_note_id, list);
+    }
+
     return {
       ...clientResult.rows[0],
       softFacts: softFacts.rows,
       points: points.rows,
-      meetingNotes: meetingNotes.rows,
+      meetingNotes: meetingNotes.rows.map((note) => ({ ...note, tasks: tasksByNoteId.get(note.id) ?? [] })),
       portfolio: {
         summary: portfolioSummary.rows[0]?.summary ?? "",
         updated_by: portfolioSummary.rows[0]?.updated_by ?? null,

@@ -13,7 +13,7 @@
     "migrate:create": "node-pg-migrate create",
     "seed": "tsx src/seed.ts",
     "sync:moneyinfo": "tsx src/sync/runMoneyInfoSync.ts",
-    "test": "NODE_ENV=test tsx --test src/**/*.test.ts"
+    "test": "NODE_ENV=test tsx --test src/*.test.ts src/**/*.test.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.1.2",

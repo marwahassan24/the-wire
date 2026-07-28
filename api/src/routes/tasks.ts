@@ -6,7 +6,7 @@ import { normalizeText } from "../textNormalize.js";
 
 const TASK_COLUMNS = `
   id, client_id, text, owner_id, due_date, status, source,
-  confirmed_by, confirmed_at, created_at
+  confirmed_by, confirmed_at, meeting_note_id, created_at
 `;
 
 const listQuerySchema = {
@@ -75,7 +75,7 @@ const tasksRoutes: FastifyPluginAsync = async (fastify) => {
 
     const { rows } = await pool.query(
       `SELECT t.id, t.client_id, t.text, t.owner_id, t.due_date, t.status, t.source,
-              t.confirmed_by, t.confirmed_at, t.created_at,
+              t.confirmed_by, t.confirmed_at, t.meeting_note_id, t.created_at,
               c.first_names AS client_first_names, c.surname AS client_surname,
               u.name AS owner_name
          FROM tasks t

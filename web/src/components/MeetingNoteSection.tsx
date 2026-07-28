@@ -7,6 +7,15 @@ import { Btn, CollapsibleSection, Input, Pill, Select, Textarea } from "./ui.js"
 
 const MEETING_TYPES = ["Annual", "Interim", "Ad hoc"] as const;
 
+const TASK_STATUS_TONE = { awaiting_sense_check: "amber", confirmed: "primary", done: "plain" } as const;
+const TASK_STATUS_LABEL: Record<string, string> = {
+  awaiting_sense_check: "awaiting sense-check",
+  confirmed: "confirmed",
+  done: "done",
+};
+
+const ACTION_LINE_HINT = 'Lines starting "TCFP:" or "Client:" become draft tasks for a human to sense-check.';
+
 // meeting_date comes back from the API as a full ISO timestamp
 // (2026-02-10T00:00:00.000Z), not the plain YYYY-MM-DD an
 // <input type="date"> requires.
@@ -142,6 +151,7 @@ function MeetingNoteView({ note, onUpdated }: { note: MeetingNote; onUpdated: (n
           </Select>
         </div>
         <Textarea value={body} onChange={(e) => setBody(e.target.value)} autoFocus />
+        <div style={{ fontSize: C.text.small, color: C.inkSoft }}>{ACTION_LINE_HINT}</div>
         <div style={{ display: "flex", gap: 8 }}>
           <Btn tone="ink" small disabled={submitting || !body.trim()} onClick={save}>
             Save
@@ -174,6 +184,24 @@ function MeetingNoteView({ note, onUpdated }: { note: MeetingNote; onUpdated: (n
         <Pill tone={note.status === "approved" ? "primary" : "amber"}>{note.status}</Pill>
       </div>
       <div style={{ fontSize: C.text.body, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{note.body}</div>
+
+      {note.tasks.length > 0 && (
+        <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${C.line}` }}>
+          <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 8 }}>
+            Draft tasks from this note
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {note.tasks.map((t) => (
+              <div key={t.id} style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                <Pill tone={TASK_STATUS_TONE[t.status]}>{TASK_STATUS_LABEL[t.status]}</Pill>
+                <span style={{ fontSize: C.text.small, color: C.ink }}>{t.text}</span>
+                <span style={{ fontSize: C.text.small, color: C.inkSoft }}>· {t.owner_name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {note.status === "draft" && (
         <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
           <Btn tone="ghost" small disabled={submitting} onClick={() => setEditing(true)}>
@@ -253,6 +281,7 @@ function NewNoteForm({
         onChange={(e) => setBody(e.target.value)}
         autoFocus
       />
+      <div style={{ fontSize: C.text.small, color: C.inkSoft }}>{ACTION_LINE_HINT}</div>
       <div style={{ display: "flex", gap: 8 }}>
         <Btn type="submit" tone="ink" small disabled={submitting || !body.trim()}>
           Save draft

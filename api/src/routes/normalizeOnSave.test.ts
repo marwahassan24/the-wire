@@ -115,6 +115,16 @@ test("meeting note body is normalised on create and on edit", async () => {
   assert.equal(edited.json().body, normalized + normalized);
 });
 
+test("a task auto-created from a meeting note's action line is normalised too", async () => {
+  const created = await app.inject({
+    method: "POST",
+    url: `/api/clients/${clientId}/meeting-notes`,
+    headers: { cookie },
+    payload: { meeting_date: "2026-01-02", meeting_type: "Ad hoc", body: `TCFP: ${withDash}` },
+  });
+  assert.equal(created.json().tasks[0].text, normalized);
+});
+
 test("portfolio summary is normalised on save", async () => {
   const res = await app.inject({
     method: "PUT",

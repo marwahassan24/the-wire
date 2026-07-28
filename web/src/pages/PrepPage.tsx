@@ -261,6 +261,7 @@ export function PrepPage() {
                       <span style={{ fontSize: C.text.small, color: C.inkSoft }}>
                         {t.owner_name}
                         {t.due_date && ` · due ${fmtDate(t.due_date)}`}
+                        {t.source === "meeting_note" && " · from meeting note"}
                       </span>
                     </div>
                     <div style={{ fontSize: C.text.body, lineHeight: 1.5 }}>{t.text}</div>

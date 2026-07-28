@@ -45,6 +45,14 @@ export interface Point {
   created_at: string;
 }
 
+export interface MeetingNoteTask {
+  id: number;
+  text: string;
+  status: "awaiting_sense_check" | "confirmed" | "done";
+  owner_id: number;
+  owner_name: string;
+}
+
 export interface MeetingNote {
   id: number;
   client_id: number;
@@ -56,6 +64,11 @@ export interface MeetingNote {
   approved_by: number | null;
   approved_at: string | null;
   created_at: string;
+  // Draft tasks auto-created from this note's "TCFP:"/"Client:" lines -
+  // see api/src/meetingNoteActions.ts. Always present (possibly empty),
+  // bundled server-side by GET /api/clients/:id and the create/edit
+  // meeting-note responses.
+  tasks: MeetingNoteTask[];
 }
 
 export interface PortfolioLogEntry {

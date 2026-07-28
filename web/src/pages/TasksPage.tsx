@@ -128,6 +128,7 @@ function TaskRow({ task, onUpdated }: { task: Task; onUpdated: (t: Task) => void
             {" · "}
             {task.owner_name}
             {task.due_date && ` · due ${fmtDate(task.due_date)}`}
+            {task.source === "meeting_note" && " · from meeting note"}
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>

@@ -60,14 +60,24 @@ export function ClientSpinePage() {
     return initial;
   });
   const [activeSection, setActiveSection] = useState<string>(SECTIONS[0].id);
+  // TasksSection fetches its own tasks once on mount (GET /api/tasks has
+  // no client filter, so it self-fetches and filters client-side) - it has
+  // no way to know a saved meeting note just created new ones elsewhere on
+  // the page. Bumping this remounts it, forcing a fresh fetch, same fix as
+  // the key={latest.id} staleness bug on the meeting note view itself.
+  const [taskRefreshKey, setTaskRefreshKey] = useState(0);
+
+  function refetchClient() {
+    return api
+      .get<ClientSpine>(`/api/clients/${id}`)
+      .then(setClient)
+      .catch(() => setError("Couldn't load this client."));
+  }
 
   useEffect(() => {
     setClient(null);
     setError(null);
-    api
-      .get<ClientSpine>(`/api/clients/${id}`)
-      .then(setClient)
-      .catch(() => setError("Couldn't load this client."));
+    refetchClient();
   }, [id]);
 
   function toggleSection(sectionId: string) {
@@ -194,7 +204,10 @@ export function ClientSpinePage() {
             <MeetingNoteSection
               clientId={client.id}
               meetingNotes={client.meetingNotes}
-              onChange={(meetingNotes: MeetingNote[]) => setClient({ ...client, meetingNotes })}
+              onChange={(meetingNotes: MeetingNote[]) => {
+                setClient({ ...client, meetingNotes });
+                setTaskRefreshKey((k) => k + 1);
+              }}
               open={openSections["meeting-note"]}
               onToggle={() => toggleSection("meeting-note")}
             />
@@ -216,9 +229,11 @@ export function ClientSpinePage() {
             />
 
             <TasksSection
+              key={taskRefreshKey}
               clientId={client.id}
               open={openSections["tasks"]}
               onToggle={() => toggleSection("tasks")}
+              onTaskStatusChanged={refetchClient}
             />
 
             <CasesSection
