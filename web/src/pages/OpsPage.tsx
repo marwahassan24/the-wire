@@ -3,10 +3,32 @@ import { Link } from "react-router-dom";
 import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
-import type { OpsCase, OpsDashboard } from "../types.js";
+import type { OpsCase, OpsDashboard, OpsOutstandingItem } from "../types.js";
 import { Btn, Card, Input, Pill, SectionHeading } from "../components/ui.js";
+import { OUTSTANDING_TYPE_LABEL } from "../components/OutstandingItemsSection.js";
 
 const DEFAULT_QUIET_DAYS = 90;
+const DEFAULT_STALLED_DAYS = 14;
+const DEFAULT_LOA_DAYS = 21;
+const DEFAULT_SIGNATURE_DAYS = 14;
+const DEFAULT_TRANSFER_DAYS = 45;
+
+// A threshold that's editable via a debounced number input - typing a new
+// value doesn't re-fetch on every keystroke, same pattern reused for every
+// configurable SLA window on this page (quiet/stalled/per-type).
+function useDebouncedDays(defaultValue: number): [number, string, (v: string) => void] {
+  const [days, setDays] = useState(defaultValue);
+  const [input, setInput] = useState(String(defaultValue));
+
+  useEffect(() => {
+    const parsed = Number(input);
+    if (!Number.isFinite(parsed) || parsed < 1) return;
+    const handle = setTimeout(() => setDays(Math.round(parsed)), 400);
+    return () => clearTimeout(handle);
+  }, [input]);
+
+  return [days, input, setInput];
+}
 
 function Stat({ n, label, tone }: { n: number; label: string; tone?: string }) {
   return (
@@ -14,6 +36,22 @@ function Stat({ n, label, tone }: { n: number; label: string; tone?: string }) {
       <div style={{ fontSize: 28, fontWeight: 800, color: tone ?? C.primary, lineHeight: 1.1 }}>{n}</div>
       <div style={{ fontSize: C.text.small, color: C.inkSoft, marginTop: 8 }}>{label}</div>
     </Card>
+  );
+}
+
+function ThresholdInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: C.text.small, color: C.inkSoft }}>
+      {label}
+      <Input
+        type="number"
+        min={1}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ width: 64, padding: "6px 8px" }}
+      />
+      days
+    </label>
   );
 }
 
@@ -26,33 +64,34 @@ function reviewPill(daysUntil: number) {
 export function OpsPage() {
   const [dashboard, setDashboard] = useState<OpsDashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [quietDays, setQuietDays] = useState(DEFAULT_QUIET_DAYS);
-  const [quietDaysInput, setQuietDaysInput] = useState(String(DEFAULT_QUIET_DAYS));
+  const [quietDays, quietDaysInput, setQuietDaysInput] = useDebouncedDays(DEFAULT_QUIET_DAYS);
+  const [stalledDays, stalledDaysInput, setStalledDaysInput] = useDebouncedDays(DEFAULT_STALLED_DAYS);
+  const [loaDays, loaDaysInput, setLoaDaysInput] = useDebouncedDays(DEFAULT_LOA_DAYS);
+  const [signatureDays, signatureDaysInput, setSignatureDaysInput] = useDebouncedDays(DEFAULT_SIGNATURE_DAYS);
+  const [transferDays, transferDaysInput, setTransferDaysInput] = useDebouncedDays(DEFAULT_TRANSFER_DAYS);
 
   function loadDashboard() {
+    const params = new URLSearchParams({
+      quiet_days: String(quietDays),
+      stalled_days: String(stalledDays),
+      loa_days: String(loaDays),
+      signature_days: String(signatureDays),
+      transfer_days: String(transferDays),
+    });
     return api
-      .get<OpsDashboard>(`/api/ops/dashboard?quiet_days=${quietDays}`)
+      .get<OpsDashboard>(`/api/ops/dashboard?${params}`)
       .then(setDashboard)
       .catch(() => setError("Couldn't load the operations dashboard."));
   }
 
   useEffect(() => {
     loadDashboard();
-  }, [quietDays]);
-
-  // Debounced so typing a new threshold doesn't re-fetch on every keystroke,
-  // same pattern as the client-list search box.
-  useEffect(() => {
-    const parsed = Number(quietDaysInput);
-    if (!Number.isFinite(parsed) || parsed < 1) return;
-    const handle = setTimeout(() => setQuietDays(Math.round(parsed)), 400);
-    return () => clearTimeout(handle);
-  }, [quietDaysInput]);
+  }, [quietDays, stalledDays, loaDays, signatureDays, transferDays]);
 
   if (error) return <div style={{ color: C.red, fontSize: C.text.small }}>{error}</div>;
   if (!dashboard) return <div style={{ color: C.inkSoft, fontSize: C.text.small }}>Loading…</div>;
 
-  const { stats, reviewsDue, pipeline, workload, goingQuiet } = dashboard;
+  const { stats, reviewsDue, pipeline, workload, goingQuiet, outstandingItems } = dashboard;
 
   return (
     <div>
@@ -75,7 +114,22 @@ export function OpsPage() {
         <Stat n={stats.liveCases} label="Live cases" />
         <Stat n={stats.withProvider} label="With provider" tone={C.mauve} />
         <Stat n={stats.withClient} label="With client" tone={C.mauve} />
-        <Stat n={stats.stalledCases} label="Stalled 14 days+" tone={stats.stalledCases ? C.red : undefined} />
+        <Stat n={stats.stalledCases} label={`Stalled ${stalledDays}d+`} tone={stats.stalledCases ? C.red : undefined} />
+        <Stat
+          n={outstandingItems.stats.loa}
+          label="LOAs outstanding"
+          tone={outstandingItems.stats.loa ? C.amber : undefined}
+        />
+        <Stat
+          n={outstandingItems.stats.signature}
+          label="Signatures outstanding"
+          tone={outstandingItems.stats.signature ? C.amber : undefined}
+        />
+        <Stat
+          n={outstandingItems.stats.transfer}
+          label="Transfers outstanding"
+          tone={outstandingItems.stats.transfer ? C.amber : undefined}
+        />
       </div>
 
       <SectionHeading>Reviews due</SectionHeading>
@@ -125,17 +179,7 @@ export function OpsPage() {
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         <SectionHeading>Going quiet</SectionHeading>
-        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: C.text.small, color: C.inkSoft }}>
-          No contact in
-          <Input
-            type="number"
-            min={1}
-            value={quietDaysInput}
-            onChange={(e) => setQuietDaysInput(e.target.value)}
-            style={{ width: 64, padding: "6px 8px" }}
-          />
-          days
-        </label>
+        <ThresholdInput label="No contact in" value={quietDaysInput} onChange={setQuietDaysInput} />
       </div>
       <Card style={{ marginBottom: 36 }}>
         {goingQuiet.length === 0 && (
@@ -173,7 +217,27 @@ export function OpsPage() {
         </div>
       </Card>
 
-      <SectionHeading>Case pipeline</SectionHeading>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <SectionHeading>Outstanding items</SectionHeading>
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+          <ThresholdInput label="LOA" value={loaDaysInput} onChange={setLoaDaysInput} />
+          <ThresholdInput label="Signature" value={signatureDaysInput} onChange={setSignatureDaysInput} />
+          <ThresholdInput label="Transfer" value={transferDaysInput} onChange={setTransferDaysInput} />
+        </div>
+      </div>
+      <Card style={{ marginBottom: 36 }}>
+        {outstandingItems.items.length === 0 && <Empty text="Nothing outstanding." />}
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {outstandingItems.items.map((item) => (
+            <OutstandingItemRow key={item.id} item={item} />
+          ))}
+        </div>
+      </Card>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <SectionHeading>Case pipeline</SectionHeading>
+        <ThresholdInput label="Stalled at" value={stalledDaysInput} onChange={setStalledDaysInput} />
+      </div>
       <div
         style={{
           display: "grid",
@@ -202,7 +266,6 @@ export function OpsPage() {
               <CaseCard
                 key={k.id}
                 kase={k}
-                stage={stage}
                 nextStage={pipeline[stageIndex + 1]?.stage}
                 onAdvanced={loadDashboard}
               />
@@ -262,14 +325,43 @@ function Empty({ text }: { text: string }) {
   return <div style={{ fontSize: C.text.small, color: C.inkSoft }}>{text}</div>;
 }
 
+function OutstandingItemRow({ item }: { item: OpsOutstandingItem }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: 14,
+        alignItems: "baseline",
+        padding: "14px 0",
+        borderTop: `1px solid ${C.line}`,
+        flexWrap: "wrap",
+      }}
+    >
+      <Link
+        to={`/clients/${item.client_id}`}
+        style={{ fontWeight: 600, fontSize: C.text.body, color: C.primary, textDecoration: "none", minWidth: 180 }}
+      >
+        {item.client_first_names} {item.client_surname}
+      </Link>
+      <span style={{ fontSize: C.text.small, color: C.inkSoft, flex: 1 }}>
+        <Pill tone="plain">{OUTSTANDING_TYPE_LABEL[item.type]}</Pill> {item.description} · {item.owner_name} · raised{" "}
+        {fmtDate(item.raised_at)}
+      </span>
+      {item.flagged ? (
+        <Pill tone="red">{item.days_outstanding}d outstanding</Pill>
+      ) : (
+        <Pill tone="plain">{item.days_outstanding}d outstanding</Pill>
+      )}
+    </div>
+  );
+}
+
 function CaseCard({
   kase,
-  stage,
   nextStage,
   onAdvanced,
 }: {
   kase: OpsCase;
-  stage: string;
   nextStage: string | undefined;
   onAdvanced: () => Promise<void>;
 }) {
@@ -305,7 +397,7 @@ function CaseCard({
       <div style={{ fontSize: C.text.small, margin: "4px 0 10px", lineHeight: 1.5 }}>{kase.title}</div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
         {kase.waiting_on && <Pill tone="plain">with {kase.waiting_on}</Pill>}
-        {stage !== "Completed" && kase.idle_days > 14 && <Pill tone="red">stalled {kase.idle_days}d</Pill>}
+        {kase.stalled && <Pill tone="red">stalled {kase.idle_days}d</Pill>}
       </div>
       {nextStage && (
         <Btn tone="ghost" small disabled={submitting} onClick={advance} style={{ marginTop: 10 }}>

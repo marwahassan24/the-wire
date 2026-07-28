@@ -117,6 +117,28 @@ export interface ContactLog {
   created_at: string;
 }
 
+export interface OutstandingItemChase {
+  id: number;
+  outstanding_item_id: number;
+  chased_at: string;
+  chased_by: number;
+  chased_by_name: string;
+  created_at: string;
+}
+
+export interface OutstandingItem {
+  id: number;
+  client_id: number;
+  type: "loa" | "signature" | "transfer";
+  description: string;
+  owner_id: number;
+  owner_name: string;
+  raised_at: string;
+  status: "outstanding" | "received" | "cancelled";
+  created_at: string;
+  chases: OutstandingItemChase[];
+}
+
 export interface Attachment {
   id: number;
   client_id: number;
@@ -137,6 +159,7 @@ export interface ClientSpine extends ClientSummary {
   attachments: Attachment[];
   contactLog: ContactLog[];
   lastContactDate: string | null;
+  outstandingItems: OutstandingItem[];
 }
 
 export interface Task {
@@ -209,6 +232,23 @@ export interface OpsCase {
   client_first_names: string;
   client_surname: string;
   idle_days: number;
+  // Server-computed against stalledDays below - read this rather than
+  // re-deriving idle_days > threshold client-side.
+  stalled: boolean;
+}
+
+export interface OpsOutstandingItem {
+  id: number;
+  client_id: number;
+  client_first_names: string;
+  client_surname: string;
+  type: "loa" | "signature" | "transfer";
+  description: string;
+  owner_id: number;
+  owner_name: string;
+  raised_at: string;
+  days_outstanding: number;
+  flagged: boolean;
 }
 
 export interface OpsPipelineStage {
@@ -250,6 +290,12 @@ export interface OpsDashboard {
   workload: OpsWorkload[];
   goingQuiet: OpsGoingQuiet[];
   quietDays: number;
+  stalledDays: number;
+  outstandingItems: {
+    stats: { loa: number; signature: number; transfer: number };
+    items: OpsOutstandingItem[];
+    thresholds: { loa: number; signature: number; transfer: number };
+  };
 }
 
 export interface StaffUser {

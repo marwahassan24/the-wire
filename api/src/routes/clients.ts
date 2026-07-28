@@ -201,6 +201,8 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
       attachments,
       contactLog,
       meetingNoteTasks,
+      outstandingItems,
+      outstandingItemChases,
     ] = await Promise.all([
         pool.query(`SELECT ${CLIENT_LIST_COLUMNS} FROM clients WHERE id = $1 AND deleted_at IS NULL`, [id]),
         pool.query(
@@ -268,6 +270,24 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
             ORDER BY t.created_at`,
           [id]
         ),
+        pool.query(
+          `SELECT oi.id, oi.client_id, oi.type, oi.description, oi.owner_id, u.name AS owner_name,
+                  oi.raised_at, oi.status, oi.created_at
+             FROM outstanding_items oi
+             JOIN users u ON u.id = oi.owner_id
+            WHERE oi.client_id = $1 AND oi.deleted_at IS NULL
+            ORDER BY oi.raised_at ASC, oi.created_at ASC`,
+          [id]
+        ),
+        pool.query(
+          `SELECT c.id, c.outstanding_item_id, c.chased_at, c.chased_by, u.name AS chased_by_name, c.created_at
+             FROM outstanding_item_chases c
+             JOIN users u ON u.id = c.chased_by
+             JOIN outstanding_items oi ON oi.id = c.outstanding_item_id
+            WHERE oi.client_id = $1
+            ORDER BY c.chased_at DESC, c.created_at DESC`,
+          [id]
+        ),
       ]);
 
     if (clientResult.rows.length === 0) {
@@ -280,6 +300,13 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
       const list = tasksByNoteId.get(task.meeting_note_id) ?? [];
       list.push(task);
       tasksByNoteId.set(task.meeting_note_id, list);
+    }
+
+    const chasesByItemId = new Map<number, unknown[]>();
+    for (const chase of outstandingItemChases.rows) {
+      const list = chasesByItemId.get(chase.outstanding_item_id) ?? [];
+      list.push(chase);
+      chasesByItemId.set(chase.outstanding_item_id, list);
     }
 
     return {
@@ -302,6 +329,10 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
       // Rows are already ordered contact_date DESC, so the first row (if
       // any) is the most recent contact - no separate MAX() query needed.
       lastContactDate: contactLog.rows[0]?.contact_date ?? null,
+      outstandingItems: outstandingItems.rows.map((item) => ({
+        ...item,
+        chases: chasesByItemId.get(item.id) ?? [],
+      })),
     };
   });
 

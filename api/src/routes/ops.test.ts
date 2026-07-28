@@ -49,6 +49,11 @@ before(async () => {
 });
 
 after(async () => {
+  await pool.query(
+    `DELETE FROM outstanding_item_chases WHERE outstanding_item_id IN (SELECT id FROM outstanding_items WHERE client_id = $1)`,
+    [clientId]
+  );
+  await pool.query(`DELETE FROM outstanding_items WHERE client_id = $1`, [clientId]);
   await pool.query(`DELETE FROM contact_log WHERE client_id = $1`, [clientId]);
   await pool.query(`DELETE FROM tasks WHERE client_id = $1`, [clientId]);
   await pool.query(`DELETE FROM case_events WHERE case_id IN (SELECT id FROM cases WHERE client_id = $1)`, [
@@ -243,4 +248,136 @@ test("goingQuiet sorts longest-silent first: never-contacted before an old-but-d
 
   await pool.query(`DELETE FROM contact_log WHERE client_id = $1`, [otherClientId]);
   await pool.query(`DELETE FROM clients WHERE id = $1`, [otherClientId]);
+});
+
+test("a case's stalled flag and stalledDays reflect the default 14-day threshold", async () => {
+  const caseRes = await app.inject({
+    method: "POST",
+    url: `/api/clients/${clientId}/cases`,
+    headers: { cookie },
+    payload: { title: "Stalled threshold case" },
+  });
+  const caseId = caseRes.json().id;
+  await pool.query(`UPDATE cases SET stage_updated_at = now() - interval '20 days' WHERE id = $1`, [caseId]);
+
+  const dashboard = await getDashboard();
+  assert.equal(dashboard.stalledDays, 14, "default stalled window should be 14 days");
+  const found = dashboard.pipeline.flatMap((p: { cases: { id: number; stalled: boolean }[] }) => p.cases).find(
+    (c: { id: number }) => c.id === caseId
+  );
+  assert.ok(found);
+  assert.equal(found.stalled, true, "20 days idle exceeds the default 14-day threshold");
+
+  await pool.query(`DELETE FROM case_events WHERE case_id = $1`, [caseId]);
+  await pool.query(`DELETE FROM cases WHERE id = $1`, [caseId]);
+});
+
+test("stalled_days is configurable and changes both the per-case flag and the stalledCases stat", async () => {
+  const caseRes = await app.inject({
+    method: "POST",
+    url: `/api/clients/${clientId}/cases`,
+    headers: { cookie },
+    payload: { title: "Configurable stalled case" },
+  });
+  const caseId = caseRes.json().id;
+  await pool.query(`UPDATE cases SET stage_updated_at = now() - interval '20 days' WHERE id = $1`, [caseId]);
+
+  const narrow = await getDashboard("?stalled_days=5");
+  const narrowCase = narrow.pipeline
+    .flatMap((p: { cases: { id: number; stalled: boolean }[] }) => p.cases)
+    .find((c: { id: number }) => c.id === caseId);
+  assert.equal(narrowCase.stalled, true, "20 days idle exceeds a 5-day threshold");
+
+  const wide = await getDashboard("?stalled_days=100");
+  const wideCase = wide.pipeline
+    .flatMap((p: { cases: { id: number; stalled: boolean }[] }) => p.cases)
+    .find((c: { id: number }) => c.id === caseId);
+  assert.equal(wideCase.stalled, false, "20 days idle does not exceed a 100-day threshold");
+  assert.equal(wide.stalledDays, 100);
+
+  await pool.query(`DELETE FROM case_events WHERE case_id = $1`, [caseId]);
+  await pool.query(`DELETE FROM cases WHERE id = $1`, [caseId]);
+});
+
+async function createOutstandingItem(body: Record<string, unknown>) {
+  return app.inject({
+    method: "POST",
+    url: `/api/clients/${clientId}/outstanding-items`,
+    headers: { cookie },
+    payload: { type: "loa", description: "Ops dashboard test item", owner_id: userId, ...body },
+  });
+}
+
+test("outstanding items appear in the dashboard with default per-type thresholds and correct stats", async () => {
+  const loa = await createOutstandingItem({ type: "loa" });
+  const signature = await createOutstandingItem({ type: "signature", description: "Sig item" });
+  const transfer = await createOutstandingItem({ type: "transfer", description: "Transfer item" });
+
+  const dashboard = await getDashboard();
+  assert.deepEqual(dashboard.outstandingItems.thresholds, { loa: 21, signature: 14, transfer: 45 });
+
+  const ids = dashboard.outstandingItems.items.map((i: { id: number }) => i.id);
+  assert.ok(ids.includes(loa.json().id));
+  assert.ok(ids.includes(signature.json().id));
+  assert.ok(ids.includes(transfer.json().id));
+
+  assert.ok(dashboard.outstandingItems.stats.loa >= 1);
+  assert.ok(dashboard.outstandingItems.stats.signature >= 1);
+  assert.ok(dashboard.outstandingItems.stats.transfer >= 1);
+});
+
+test("an item just raised is not flagged; one older than its type's threshold is", async () => {
+  const fresh = await createOutstandingItem({ type: "signature" });
+  const old = await createOutstandingItem({ type: "signature", description: "Old signature chase" });
+  await pool.query(`UPDATE outstanding_items SET raised_at = CURRENT_DATE - 30 WHERE id = $1`, [old.json().id]);
+
+  const dashboard = await getDashboard();
+  const freshItem = dashboard.outstandingItems.items.find((i: { id: number }) => i.id === fresh.json().id);
+  const oldItem = dashboard.outstandingItems.items.find((i: { id: number }) => i.id === old.json().id);
+  assert.equal(freshItem.flagged, false, "raised today should be well within the 14-day signature threshold");
+  assert.equal(oldItem.flagged, true, "30 days old exceeds the 14-day signature threshold");
+});
+
+test("per-type thresholds are independently configurable via loa_days/signature_days/transfer_days", async () => {
+  const item = await createOutstandingItem({ type: "loa" });
+  await pool.query(`UPDATE outstanding_items SET raised_at = CURRENT_DATE - 10 WHERE id = $1`, [item.json().id]);
+
+  const strict = await getDashboard("?loa_days=5");
+  const strictItem = strict.outstandingItems.items.find((i: { id: number }) => i.id === item.json().id);
+  assert.equal(strictItem.flagged, true, "10 days old exceeds a 5-day LOA threshold");
+  assert.equal(strict.outstandingItems.thresholds.loa, 5);
+
+  const lenient = await getDashboard("?loa_days=30");
+  const lenientItem = lenient.outstandingItems.items.find((i: { id: number }) => i.id === item.json().id);
+  assert.equal(lenientItem.flagged, false, "10 days old does not exceed a 30-day LOA threshold");
+});
+
+test("items are sorted oldest-raised first, and received/cancelled items are excluded", async () => {
+  const younger = await createOutstandingItem({ type: "transfer", raised_at: "2026-03-01" });
+  const older = await createOutstandingItem({ type: "transfer", raised_at: "2026-01-01" });
+  const received = await createOutstandingItem({ type: "transfer", description: "Already sorted" });
+  await app.inject({
+    method: "PATCH",
+    url: `/api/outstanding-items/${received.json().id}`,
+    headers: { cookie },
+    payload: { status: "received" },
+  });
+
+  const dashboard = await getDashboard();
+  const ids = dashboard.outstandingItems.items.map((i: { id: number }) => i.id);
+  assert.ok(!ids.includes(received.json().id), "received items should not appear as outstanding");
+
+  const olderIdx = ids.indexOf(older.json().id);
+  const youngerIdx = ids.indexOf(younger.json().id);
+  assert.ok(olderIdx !== -1 && youngerIdx !== -1);
+  assert.ok(olderIdx < youngerIdx, "the older raised_at should sort first");
+});
+
+test("a soft-deleted outstanding item does not appear on the dashboard", async () => {
+  const item = await createOutstandingItem({ type: "loa", description: "Will be deleted" });
+  await app.inject({ method: "DELETE", url: `/api/outstanding-items/${item.json().id}`, headers: { cookie } });
+
+  const dashboard = await getDashboard();
+  const ids = dashboard.outstandingItems.items.map((i: { id: number }) => i.id);
+  assert.ok(!ids.includes(item.json().id));
 });

@@ -47,6 +47,11 @@ before(async () => {
 });
 
 after(async () => {
+  await pool.query(
+    `DELETE FROM outstanding_item_chases WHERE outstanding_item_id IN (SELECT id FROM outstanding_items WHERE client_id = $1)`,
+    [clientId]
+  );
+  await pool.query(`DELETE FROM outstanding_items WHERE client_id = $1`, [clientId]);
   await pool.query(`DELETE FROM contact_log WHERE client_id = $1`, [clientId]);
   await pool.query(`DELETE FROM tasks WHERE client_id = $1`, [clientId]);
   await pool.query(`DELETE FROM case_events WHERE case_id IN (SELECT id FROM cases WHERE client_id = $1)`, [
@@ -185,6 +190,24 @@ test("case title is normalised on create and on edit; case_events note is normal
     [created.json().id]
   );
   assert.equal(rows[0].note, normalized);
+});
+
+test("outstanding item description is normalised on create and on edit", async () => {
+  const created = await app.inject({
+    method: "POST",
+    url: `/api/clients/${clientId}/outstanding-items`,
+    headers: { cookie },
+    payload: { type: "loa", description: withDash, owner_id: userId },
+  });
+  assert.equal(created.json().description, normalized);
+
+  const edited = await app.inject({
+    method: "PATCH",
+    url: `/api/outstanding-items/${created.json().id}`,
+    headers: { cookie },
+    payload: { description: withDash + withDash },
+  });
+  assert.equal(edited.json().description, normalized + normalized);
 });
 
 test("contact log note is normalised on create", async () => {

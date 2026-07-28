@@ -3,7 +3,16 @@ import { Link, useParams } from "react-router-dom";
 import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
-import type { Attachment, ClientSpine, ContactLog, MeetingNote, Point, Portfolio, SoftFact } from "../types.js";
+import type {
+  Attachment,
+  ClientSpine,
+  ContactLog,
+  MeetingNote,
+  OutstandingItem,
+  Point,
+  Portfolio,
+  SoftFact,
+} from "../types.js";
 import { Pill } from "../components/ui.js";
 import { PointsSection } from "../components/PointsSection.js";
 import { AttachmentsSection } from "../components/AttachmentsSection.js";
@@ -13,6 +22,7 @@ import { PortfolioSection } from "../components/PortfolioSection.js";
 import { TasksSection } from "../components/TasksSection.js";
 import { CasesSection } from "../components/CasesSection.js";
 import { ContactLogSection } from "../components/ContactLogSection.js";
+import { OutstandingItemsSection } from "../components/OutstandingItemsSection.js";
 
 // The four Living Document sections stay in this fixed order - human
 // detail first, technical detail last - per doctrine, not preference. The
@@ -27,6 +37,7 @@ const SECTIONS: { id: string; title: string; defaultOpen: boolean }[] = [
   { id: "tasks", title: "6. Tasks", defaultOpen: false },
   { id: "cases", title: "7. Cases", defaultOpen: false },
   { id: "contact-log", title: "8. Contact log", defaultOpen: false },
+  { id: "outstanding-items", title: "9. Outstanding items", defaultOpen: false },
 ];
 
 const PREFS_KEY = "the-wire.spine-sections";
@@ -250,6 +261,14 @@ export function ClientSpinePage() {
               }
               open={openSections["contact-log"]}
               onToggle={() => toggleSection("contact-log")}
+            />
+
+            <OutstandingItemsSection
+              clientId={client.id}
+              outstandingItems={client.outstandingItems}
+              onChange={(outstandingItems: OutstandingItem[]) => setClient({ ...client, outstandingItems })}
+              open={openSections["outstanding-items"]}
+              onToggle={() => toggleSection("outstanding-items")}
             />
           </div>
         </div>
