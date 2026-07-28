@@ -3,7 +3,7 @@ import { theme as C } from "../theme.js";
 import { api, ApiError } from "../api.js";
 import { fmtDate } from "../format.js";
 import type { StaffUser, Task } from "../types.js";
-import { Btn, Card, Input, Pill, SectionHeading, Select } from "./ui.js";
+import { Btn, CollapsibleSection, Input, Pill, Select } from "./ui.js";
 
 const STATUS_TONE = { awaiting_sense_check: "amber", confirmed: "primary", done: "plain" } as const;
 const STATUS_LABEL: Record<Task["status"], string> = {
@@ -14,7 +14,15 @@ const STATUS_LABEL: Record<Task["status"], string> = {
 
 // GET /api/tasks has no client filter (owner/status/due only) - fetch
 // everything and keep just this client's, same tradeoff as CasesSection.
-export function TasksSection({ clientId }: { clientId: number }) {
+export function TasksSection({
+  clientId,
+  open,
+  onToggle,
+}: {
+  clientId: number;
+  open: boolean;
+  onToggle: () => void;
+}) {
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [staff, setStaff] = useState<StaffUser[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -34,9 +42,11 @@ export function TasksSection({ clientId }: { clientId: number }) {
     setTasks((prev) => prev?.map((t) => (t.id === updated.id ? updated : t)) ?? prev);
   }
 
+  const openCount = tasks?.filter((t) => t.status !== "done").length ?? 0;
+  const summary = !tasks ? "" : tasks.length === 0 ? "(empty)" : openCount > 0 ? `(${openCount} open)` : "(all done)";
+
   return (
-    <Card>
-      <SectionHeading>6. Tasks</SectionHeading>
+    <CollapsibleSection id="tasks" title="6. Tasks" summary={summary} open={open} onToggle={onToggle}>
       {error && <div style={{ fontSize: C.text.small, color: C.red, marginBottom: 12 }}>{error}</div>}
       {tasks && tasks.length === 0 && (
         <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 16 }}>Nothing here yet.</div>
@@ -47,7 +57,7 @@ export function TasksSection({ clientId }: { clientId: number }) {
         ))}
       </div>
       <NewTaskForm clientId={clientId} staff={staff} bordered={!!tasks?.length} onCreated={handleCreated} />
-    </Card>
+    </CollapsibleSection>
   );
 }
 

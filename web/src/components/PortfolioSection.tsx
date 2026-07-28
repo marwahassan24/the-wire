@@ -4,17 +4,28 @@ import { api, ApiError } from "../api.js";
 import { fmtDate } from "../format.js";
 import type { Portfolio, PortfolioLogEntry } from "../types.js";
 import { AssetAllocation } from "./AssetAllocation.js";
-import { Btn, Card, Input, SectionHeading, Textarea } from "./ui.js";
+import { Btn, CollapsibleSection, Input, Textarea } from "./ui.js";
 
 export function PortfolioSection({
   clientId,
   portfolio,
   onChange,
+  open,
+  onToggle,
 }: {
   clientId: number;
   portfolio: Portfolio;
   onChange: (portfolio: Portfolio) => void;
+  open: boolean;
+  onToggle: () => void;
 }) {
+  const hasSummary = portfolio.summary.trim().length > 0;
+  const summary =
+    !hasSummary && portfolio.logs.length === 0
+      ? "- empty"
+      : hasSummary && portfolio.updated_at
+        ? `- updated ${fmtDate(portfolio.updated_at)}`
+        : `- ${portfolio.logs.length} log ${portfolio.logs.length === 1 ? "entry" : "entries"}`;
   const [editingSummary, setEditingSummary] = useState(false);
   const [summaryDraft, setSummaryDraft] = useState(portfolio.summary);
   const [savingSummary, setSavingSummary] = useState(false);
@@ -73,8 +84,7 @@ export function PortfolioSection({
   }
 
   return (
-    <Card>
-      <SectionHeading>4. Portfolio detail</SectionHeading>
+    <CollapsibleSection id="portfolio" title="4. Portfolio detail" summary={summary} open={open} onToggle={onToggle}>
       <AssetAllocation holdings={portfolio.holdings} />
 
       {!editingSummary && (
@@ -151,6 +161,6 @@ export function PortfolioSection({
         </Btn>
       </form>
       {logError && <div style={{ fontSize: C.text.small, color: C.red, marginTop: 8 }}>{logError}</div>}
-    </Card>
+    </CollapsibleSection>
   );
 }

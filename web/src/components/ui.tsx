@@ -72,9 +72,10 @@ export function Btn({
   );
 }
 
-export function Card({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+export function Card({ children, style, id }: { children: ReactNode; style?: CSSProperties; id?: string }) {
   return (
     <div
+      id={id}
       style={{
         background: C.card,
         borderRadius: 14,
@@ -85,6 +86,63 @@ export function Card({ children, style }: { children: ReactNode; style?: CSSProp
     >
       {children}
     </div>
+  );
+}
+
+// A section that can be collapsed to just its header. The header stays in
+// the DOM (and keeps its id) even when collapsed, so a sidebar link can
+// scroll to it and an IntersectionObserver can track it for scroll-spy -
+// only the body underneath is conditionally rendered.
+export function CollapsibleSection({
+  id,
+  title,
+  summary,
+  open,
+  onToggle,
+  children,
+}: {
+  id: string;
+  title: string;
+  summary: string;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Card id={id} style={{ scrollMarginTop: 20 }}>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        style={{
+          all: "unset",
+          boxSizing: "border-box",
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 12,
+          width: "100%",
+          cursor: "pointer",
+          marginBottom: open ? 16 : 0,
+        }}
+      >
+        <span style={{ fontSize: C.text.heading, fontWeight: 600, lineHeight: 1.3, color: C.ink }}>
+          {title} <span style={{ fontWeight: 400, color: C.inkSoft }}>{summary}</span>
+        </span>
+        <span
+          style={{
+            flexShrink: 0,
+            fontSize: 12,
+            color: C.inkSoft,
+            transform: open ? "rotate(180deg)" : undefined,
+            transition: "transform 0.15s ease",
+          }}
+        >
+          ▾
+        </span>
+      </button>
+      {open && <div>{children}</div>}
+    </Card>
   );
 }
 

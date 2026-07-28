@@ -3,17 +3,22 @@ import { theme as C } from "../theme.js";
 import { api, ApiError } from "../api.js";
 import { fmtDate } from "../format.js";
 import type { SoftFact } from "../types.js";
-import { Btn, Card, Input, SectionHeading } from "./ui.js";
+import { Btn, CollapsibleSection, Input } from "./ui.js";
 
 export function SoftFactsSection({
   clientId,
   softFacts,
   onChange,
+  open,
+  onToggle,
 }: {
   clientId: number;
   softFacts: SoftFact[];
   onChange: (softFacts: SoftFact[]) => void;
+  open: boolean;
+  onToggle: () => void;
 }) {
+  const summary = softFacts.length === 0 ? "(empty)" : `(${softFacts.length})`;
   const [newDate, setNewDate] = useState("");
   const [newText, setNewText] = useState("");
   const [adding, setAdding] = useState(false);
@@ -50,8 +55,7 @@ export function SoftFactsSection({
   }
 
   return (
-    <Card>
-      <SectionHeading>1. Soft facts</SectionHeading>
+    <CollapsibleSection id="soft-facts" title="1. Soft facts" summary={summary} open={open} onToggle={onToggle}>
       {softFacts.length === 0 && (
         <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 16 }}>Nothing here yet.</div>
       )}
@@ -77,7 +81,7 @@ export function SoftFactsSection({
         </Btn>
       </form>
       {error && <div style={{ fontSize: C.text.small, color: C.red, marginTop: 8 }}>{error}</div>}
-    </Card>
+    </CollapsibleSection>
   );
 }
 

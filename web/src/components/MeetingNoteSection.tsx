@@ -3,7 +3,7 @@ import { theme as C } from "../theme.js";
 import { api, ApiError } from "../api.js";
 import { fmtDate } from "../format.js";
 import type { MeetingNote } from "../types.js";
-import { Btn, Card, Input, Pill, SectionHeading, Select, Textarea } from "./ui.js";
+import { Btn, CollapsibleSection, Input, Pill, Select, Textarea } from "./ui.js";
 
 const MEETING_TYPES = ["Annual", "Interim", "Ad hoc"] as const;
 
@@ -16,13 +16,22 @@ export function MeetingNoteSection({
   clientId,
   meetingNotes,
   onChange,
+  open,
+  onToggle,
 }: {
   clientId: number;
   meetingNotes: MeetingNote[];
   onChange: (meetingNotes: MeetingNote[]) => void;
+  open: boolean;
+  onToggle: () => void;
 }) {
   const [creating, setCreating] = useState(false);
   const latest = meetingNotes[0] ?? null;
+  const summary = !latest
+    ? "- empty"
+    : latest.status === "draft"
+      ? "- draft awaiting approval"
+      : `- last ${fmtDate(latest.meeting_date)}`;
 
   function insertSorted(note: MeetingNote) {
     const rest = meetingNotes.filter((n) => n.id !== note.id);
@@ -36,8 +45,13 @@ export function MeetingNoteSection({
   const canStartNew = !creating && (!latest || latest.status === "approved");
 
   return (
-    <Card>
-      <SectionHeading>3. Meeting note (client-visible)</SectionHeading>
+    <CollapsibleSection
+      id="meeting-note"
+      title="3. Meeting note (client-visible)"
+      summary={summary}
+      open={open}
+      onToggle={onToggle}
+    >
       {!latest && !creating && <div style={{ fontSize: C.text.small, color: C.inkSoft }}>Nothing here yet.</div>}
       {/* key={latest.id} forces a fresh mount whenever the displayed note
           changes identity - without it, React reuses the instance and its
@@ -63,7 +77,7 @@ export function MeetingNoteSection({
           onCancel={() => setCreating(false)}
         />
       )}
-    </Card>
+    </CollapsibleSection>
   );
 }
 

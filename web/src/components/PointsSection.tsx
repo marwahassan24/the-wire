@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { theme as C } from "../theme.js";
 import { api, ApiError } from "../api.js";
 import type { Point } from "../types.js";
-import { Btn, Card, Input, Pill, SectionHeading } from "./ui.js";
+import { Btn, CollapsibleSection, Input, Pill } from "./ui.js";
 
 const POINT_TONE = { open: "amber", carried: "amber", resolved: "plain" } as const;
 
@@ -10,11 +10,17 @@ export function PointsSection({
   clientId,
   points,
   onChange,
+  open,
+  onToggle,
 }: {
   clientId: number;
   points: Point[];
   onChange: (points: Point[]) => void;
+  open: boolean;
+  onToggle: () => void;
 }) {
+  const actionable = points.filter((p) => p.status !== "resolved").length;
+  const summary = points.length === 0 ? "(empty)" : actionable > 0 ? `(${actionable} open)` : "(all resolved)";
   const [newText, setNewText] = useState("");
   const [raising, setRaising] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,8 +46,13 @@ export function PointsSection({
   }
 
   return (
-    <Card>
-      <SectionHeading>2. Points to note and discuss</SectionHeading>
+    <CollapsibleSection
+      id="points"
+      title="2. Points to note and discuss"
+      summary={summary}
+      open={open}
+      onToggle={onToggle}
+    >
       {points.length === 0 && (
         <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 16 }}>Nothing here yet.</div>
       )}
@@ -65,7 +76,7 @@ export function PointsSection({
         </Btn>
       </form>
       {error && <div style={{ fontSize: C.text.small, color: C.red, marginTop: 8 }}>{error}</div>}
-    </Card>
+    </CollapsibleSection>
   );
 }
 

@@ -3,7 +3,7 @@ import { theme as C } from "../theme.js";
 import { api, ApiError } from "../api.js";
 import { fmtDate } from "../format.js";
 import type { ContactLog, StaffUser } from "../types.js";
-import { Btn, Card, Input, Pill, SectionHeading, Select } from "./ui.js";
+import { Btn, CollapsibleSection, Input, Pill, Select } from "./ui.js";
 
 export const CONTACT_TYPE_LABEL: Record<ContactLog["type"], string> = {
   call: "Call",
@@ -16,11 +16,16 @@ export function ContactLogSection({
   clientId,
   contactLog,
   onChange,
+  open,
+  onToggle,
 }: {
   clientId: number;
   contactLog: ContactLog[];
   onChange: (contactLog: ContactLog[]) => void;
+  open: boolean;
+  onToggle: () => void;
 }) {
+  const summary = contactLog.length === 0 ? "- none logged" : `- last contact ${fmtDate(contactLog[0].contact_date)}`;
   const [staff, setStaff] = useState<StaffUser[]>([]);
   const [newDate, setNewDate] = useState("");
   const [newType, setNewType] = useState<ContactLog["type"] | "">("call");
@@ -69,8 +74,7 @@ export function ContactLogSection({
   }
 
   return (
-    <Card>
-      <SectionHeading>8. Contact log</SectionHeading>
+    <CollapsibleSection id="contact-log" title="8. Contact log" summary={summary} open={open} onToggle={onToggle}>
       {contactLog.length === 0 && (
         <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 16 }}>Nothing here yet.</div>
       )}
@@ -121,7 +125,7 @@ export function ContactLogSection({
         </Btn>
       </form>
       {error && <div style={{ fontSize: C.text.small, color: C.red, marginTop: 8 }}>{error}</div>}
-    </Card>
+    </CollapsibleSection>
   );
 }
 

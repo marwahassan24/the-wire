@@ -3,17 +3,22 @@ import { theme as C } from "../theme.js";
 import { api, ApiError, API_URL } from "../api.js";
 import { fmtBytes, fmtDate } from "../format.js";
 import type { Attachment } from "../types.js";
-import { Btn, Card, Input, SectionHeading } from "./ui.js";
+import { Btn, CollapsibleSection, Input } from "./ui.js";
 
 export function AttachmentsSection({
   clientId,
   attachments,
   onChange,
+  open,
+  onToggle,
 }: {
   clientId: number;
   attachments: Attachment[];
   onChange: (attachments: Attachment[]) => void;
+  open: boolean;
+  onToggle: () => void;
 }) {
+  const summary = attachments.length === 0 ? "(empty)" : `(${attachments.length})`;
   const fileRef = useRef<HTMLInputElement>(null);
   const [note, setNote] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -56,8 +61,7 @@ export function AttachmentsSection({
   }
 
   return (
-    <Card>
-      <SectionHeading>5. Documents</SectionHeading>
+    <CollapsibleSection id="documents" title="5. Documents" summary={summary} open={open} onToggle={onToggle}>
       {attachments.length === 0 && (
         <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 16 }}>Nothing here yet.</div>
       )}
@@ -99,6 +103,6 @@ export function AttachmentsSection({
         </div>
       </form>
       {error && <div style={{ fontSize: C.text.small, color: C.red, marginTop: 8 }}>{error}</div>}
-    </Card>
+    </CollapsibleSection>
   );
 }

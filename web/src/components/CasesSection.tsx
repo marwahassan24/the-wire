@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { theme as C } from "../theme.js";
 import { api, ApiError } from "../api.js";
 import type { Case, StaffUser } from "../types.js";
-import { Btn, Card, Input, Pill, SectionHeading, Select } from "./ui.js";
+import { Btn, CollapsibleSection, Input, Pill, Select } from "./ui.js";
 
 const WAITING_LABEL: Record<string, string> = {
   us: "us",
@@ -15,7 +15,15 @@ const WAITING_LABEL: Record<string, string> = {
 // fetch everything and keep just this client's. Stage transitions live
 // on the Ops page's pipeline view, not duplicated here - this section is
 // create + read-only context only.
-export function CasesSection({ clientId }: { clientId: number }) {
+export function CasesSection({
+  clientId,
+  open,
+  onToggle,
+}: {
+  clientId: number;
+  open: boolean;
+  onToggle: () => void;
+}) {
   const [cases, setCases] = useState<Case[] | null>(null);
   const [staff, setStaff] = useState<StaffUser[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -32,9 +40,11 @@ export function CasesSection({ clientId }: { clientId: number }) {
     setCases((prev) => (prev ? [kase, ...prev] : [kase]));
   }
 
+  const openCount = cases?.filter((k) => k.stage !== "Completed").length ?? 0;
+  const summary = !cases ? "" : cases.length === 0 ? "(empty)" : openCount > 0 ? `(${openCount} open)` : "(all completed)";
+
   return (
-    <Card>
-      <SectionHeading>7. Cases</SectionHeading>
+    <CollapsibleSection id="cases" title="7. Cases" summary={summary} open={open} onToggle={onToggle}>
       {error && <div style={{ fontSize: C.text.small, color: C.red, marginBottom: 12 }}>{error}</div>}
       {cases && cases.length === 0 && (
         <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 16 }}>Nothing here yet.</div>
@@ -51,7 +61,7 @@ export function CasesSection({ clientId }: { clientId: number }) {
         ))}
       </div>
       <NewCaseForm clientId={clientId} staff={staff} bordered={!!cases?.length} onCreated={handleCreated} />
-    </Card>
+    </CollapsibleSection>
   );
 }
 
