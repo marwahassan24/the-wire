@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
-import type { Attachment, ClientSpine, MeetingNote, Point, Portfolio, SoftFact } from "../types.js";
+import type { Attachment, ClientSpine, ContactLog, MeetingNote, Point, Portfolio, SoftFact } from "../types.js";
 import { Pill } from "../components/ui.js";
 import { PointsSection } from "../components/PointsSection.js";
 import { AttachmentsSection } from "../components/AttachmentsSection.js";
@@ -12,6 +12,7 @@ import { MeetingNoteSection } from "../components/MeetingNoteSection.js";
 import { PortfolioSection } from "../components/PortfolioSection.js";
 import { TasksSection } from "../components/TasksSection.js";
 import { CasesSection } from "../components/CasesSection.js";
+import { ContactLogSection } from "../components/ContactLogSection.js";
 
 export function ClientSpinePage() {
   const { id } = useParams<{ id: string }>();
@@ -61,6 +62,8 @@ export function ClientSpinePage() {
         {client.review_cycle} cycle
         {client.next_review_date &&
           ` · next ${client.next_review_type ?? "review"} ${fmtDate(client.next_review_date)}`}
+        {" · last contact "}
+        {client.lastContactDate ? fmtDate(client.lastContactDate) : "none logged"}
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
@@ -97,6 +100,14 @@ export function ClientSpinePage() {
         <TasksSection clientId={client.id} />
 
         <CasesSection clientId={client.id} />
+
+        <ContactLogSection
+          clientId={client.id}
+          contactLog={client.contactLog}
+          onChange={(contactLog: ContactLog[]) =>
+            setClient({ ...client, contactLog, lastContactDate: contactLog[0]?.contact_date ?? null })
+          }
+        />
       </div>
     </div>
   );

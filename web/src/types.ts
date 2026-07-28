@@ -93,6 +93,17 @@ export interface Portfolio {
   holdings: PortfolioHolding[];
 }
 
+export interface ContactLog {
+  id: number;
+  client_id: number;
+  contact_date: string;
+  type: "call" | "email" | "meeting" | "other";
+  staff_id: number;
+  staff_name: string;
+  note: string;
+  created_at: string;
+}
+
 export interface Attachment {
   id: number;
   client_id: number;
@@ -111,6 +122,8 @@ export interface ClientSpine extends ClientSummary {
   meetingNotes: MeetingNote[];
   portfolio: Portfolio;
   attachments: Attachment[];
+  contactLog: ContactLog[];
+  lastContactDate: string | null;
 }
 
 export interface Task {
@@ -157,6 +170,8 @@ export interface PrepPack extends ClientSummary {
   };
   outstandingTasks: PrepTask[];
   lastMeetingNote: MeetingNote | null;
+  recentContactLog: ContactLog[];
+  lastContactDate: string | null;
 }
 
 export interface OpsReviewDue {
@@ -197,6 +212,16 @@ export interface OpsWorkload {
   open_cases: number;
 }
 
+export interface OpsGoingQuiet {
+  id: number;
+  first_names: string;
+  surname: string;
+  adviser_id: number;
+  adviser_name: string;
+  last_contact_date: string | null;
+  days_since_contact: number | null;
+}
+
 export interface OpsDashboard {
   stats: {
     reviewsOverdue: number;
@@ -210,6 +235,8 @@ export interface OpsDashboard {
   reviewsDue: OpsReviewDue[];
   pipeline: OpsPipelineStage[];
   workload: OpsWorkload[];
+  goingQuiet: OpsGoingQuiet[];
+  quietDays: number;
 }
 
 export interface StaffUser {

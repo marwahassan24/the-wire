@@ -19,6 +19,7 @@ import prepRoutes from "./routes/prep.js";
 import opsRoutes from "./routes/ops.js";
 import attachmentsRoutes from "./routes/attachments.js";
 import usersRoutes from "./routes/users.js";
+import contactLogRoutes from "./routes/contactLog.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   // Fastify's default ajv config silently strips unknown body/query fields
@@ -58,6 +59,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     await protectedRoutes.register(opsRoutes);
     await protectedRoutes.register(attachmentsRoutes);
     await protectedRoutes.register(usersRoutes);
+    await protectedRoutes.register(contactLogRoutes);
   });
 
   app.get("/health", async () => {

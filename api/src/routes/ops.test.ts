@@ -49,6 +49,7 @@ before(async () => {
 });
 
 after(async () => {
+  await pool.query(`DELETE FROM contact_log WHERE client_id = $1`, [clientId]);
   await pool.query(`DELETE FROM tasks WHERE client_id = $1`, [clientId]);
   await pool.query(`DELETE FROM case_events WHERE case_id IN (SELECT id FROM cases WHERE client_id = $1)`, [
     clientId,
@@ -61,8 +62,8 @@ after(async () => {
   await pool.end();
 });
 
-async function getDashboard() {
-  const res = await app.inject({ method: "GET", url: "/api/ops/dashboard", headers: { cookie } });
+async function getDashboard(query = "") {
+  const res = await app.inject({ method: "GET", url: `/api/ops/dashboard${query}`, headers: { cookie } });
   assert.equal(res.statusCode, 200);
   return res.json();
 }
@@ -162,4 +163,84 @@ test("soft-deleting the client removes its case from the pipeline and its owner'
   await pool.query(`UPDATE clients SET deleted_at = NULL WHERE id = $1`, [clientId]);
   await pool.query(`DELETE FROM case_events WHERE case_id = $1`, [caseId]);
   await pool.query(`DELETE FROM cases WHERE id = $1`, [caseId]);
+});
+
+test("a client with no contact logged at all appears in goingQuiet at the default threshold", async () => {
+  await pool.query(`DELETE FROM contact_log WHERE client_id = $1`, [clientId]);
+
+  const dashboard = await getDashboard();
+  assert.equal(dashboard.quietDays, 90, "default quiet window should be 90 days");
+  const entry = dashboard.goingQuiet.find((g: { id: number }) => g.id === clientId);
+  assert.ok(entry, "never-contacted client should appear in goingQuiet");
+  assert.equal(entry.last_contact_date, null);
+});
+
+test("a client contacted today does not appear in goingQuiet", async () => {
+  await pool.query(`DELETE FROM contact_log WHERE client_id = $1`, [clientId]);
+  await app.inject({
+    method: "POST",
+    url: `/api/clients/${clientId}/contact-log`,
+    headers: { cookie },
+    payload: { type: "call", staff_id: userId, note: "Caught up today." },
+  });
+
+  const dashboard = await getDashboard();
+  const entry = dashboard.goingQuiet.find((g: { id: number }) => g.id === clientId);
+  assert.equal(entry, undefined, "a client contacted today should not be going quiet");
+
+  await pool.query(`DELETE FROM contact_log WHERE client_id = $1`, [clientId]);
+});
+
+test("quiet_days is configurable and overrides the default", async () => {
+  await pool.query(`DELETE FROM contact_log WHERE client_id = $1`, [clientId]);
+  await app.inject({
+    method: "POST",
+    url: `/api/clients/${clientId}/contact-log`,
+    headers: { cookie },
+    payload: { type: "call", staff_id: userId, note: "Ten days ago.", contact_date: "2020-01-01" },
+  });
+
+  // A huge window swallows even a very old contact.
+  const wide = await getDashboard("?quiet_days=100000");
+  assert.equal(
+    wide.goingQuiet.find((g: { id: number }) => g.id === clientId),
+    undefined
+  );
+
+  // A 1-day window flags anything not contacted today.
+  const narrow = await getDashboard("?quiet_days=1");
+  const entry = narrow.goingQuiet.find((g: { id: number }) => g.id === clientId);
+  assert.ok(entry, "a 1-day window should flag a client last contacted in 2020");
+  assert.equal(narrow.quietDays, 1);
+
+  await pool.query(`DELETE FROM contact_log WHERE client_id = $1`, [clientId]);
+});
+
+test("goingQuiet sorts longest-silent first: never-contacted before an old-but-dated contact", async () => {
+  await pool.query(`DELETE FROM contact_log WHERE client_id = $1`, [clientId]);
+
+  const { rows: otherClientRows } = await pool.query<{ id: number }>(
+    `INSERT INTO clients (first_names, surname, status, adviser_id, cm_id, review_cycle)
+     VALUES ('Ops Quiet Sort', 'TESTCLIENT', 'Working', $1, $1, 'Annual') RETURNING id`,
+    [userId]
+  );
+  const otherClientId = otherClientRows[0].id;
+
+  // clientId: never contacted. otherClientId: contacted, but long ago.
+  await app.inject({
+    method: "POST",
+    url: `/api/clients/${otherClientId}/contact-log`,
+    headers: { cookie },
+    payload: { type: "call", staff_id: userId, note: "Ancient contact.", contact_date: "2020-01-01" },
+  });
+
+  const dashboard = await getDashboard();
+  const ids = dashboard.goingQuiet.map((g: { id: number }) => g.id);
+  const neverIdx = ids.indexOf(clientId);
+  const oldIdx = ids.indexOf(otherClientId);
+  assert.ok(neverIdx !== -1 && oldIdx !== -1);
+  assert.ok(neverIdx < oldIdx, "never-contacted client should sort ahead of one contacted (however long ago)");
+
+  await pool.query(`DELETE FROM contact_log WHERE client_id = $1`, [otherClientId]);
+  await pool.query(`DELETE FROM clients WHERE id = $1`, [otherClientId]);
 });

@@ -5,6 +5,7 @@ import { api } from "../api.js";
 import { fmtDate } from "../format.js";
 import type { PrepPack } from "../types.js";
 import { Card, Pill, SectionHeading } from "../components/ui.js";
+import { CONTACT_TYPE_LABEL } from "../components/ContactLogSection.js";
 
 const POINT_TONE = { open: "amber", carried: "amber", resolved: "plain" } as const;
 const TASK_STATUS_TONE = { awaiting_sense_check: "amber", confirmed: "primary", done: "plain" } as const;
@@ -46,6 +47,8 @@ export function PrepPage() {
         {prep.review_cycle} cycle
         {prep.next_review_date &&
           ` · next ${prep.next_review_type ?? "review"} ${fmtDate(prep.next_review_date)}`}
+        {" · last contact "}
+        {prep.lastContactDate ? fmtDate(prep.lastContactDate) : "none logged"}
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
@@ -148,6 +151,23 @@ export function PrepPage() {
               </div>
             </div>
           )}
+        </Card>
+
+        <Card>
+          <SectionHeading>Recent contact</SectionHeading>
+          {prep.recentContactLog.length === 0 && <Empty />}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {prep.recentContactLog.map((c) => (
+              <div key={c.id}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                  <span style={{ fontSize: C.text.small, color: C.inkSoft }}>{fmtDate(c.contact_date)}</span>
+                  <Pill tone="plain">{CONTACT_TYPE_LABEL[c.type]}</Pill>
+                  <span style={{ fontSize: C.text.small, color: C.inkSoft }}>{c.staff_name}</span>
+                </div>
+                <div style={{ fontSize: C.text.body, lineHeight: 1.6 }}>{c.note}</div>
+              </div>
+            ))}
+          </div>
         </Card>
       </div>
     </div>

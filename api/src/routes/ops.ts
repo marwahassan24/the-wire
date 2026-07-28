@@ -20,6 +20,20 @@ const STAGES = [
 const REVIEW_SOON_DAYS = 42;
 const STALLED_DAYS = 14;
 
+// "Going quiet" = no logged contact within this many days. Configurable
+// per the brief; 90 is the default when the caller doesn't specify one.
+const DEFAULT_QUIET_DAYS = 90;
+
+const dashboardQuerySchema = {
+  querystring: {
+    type: "object",
+    properties: {
+      quiet_days: { type: "integer", minimum: 1 },
+    },
+    additionalProperties: false,
+  },
+};
+
 interface CaseRow {
   id: number;
   client_id: number;
@@ -33,8 +47,11 @@ interface CaseRow {
 }
 
 const opsRoutes: FastifyPluginAsync = async (fastify) => {
-  fastify.get("/api/ops/dashboard", async () => {
-    const [reviewsResult, noReviewDateResult, casesResult, workloadResult] = await Promise.all([
+  fastify.get("/api/ops/dashboard", { schema: dashboardQuerySchema }, async (request) => {
+    const { quiet_days } = request.query as { quiet_days?: number };
+    const quietDays = quiet_days ?? DEFAULT_QUIET_DAYS;
+
+    const [reviewsResult, noReviewDateResult, casesResult, workloadResult, goingQuietResult] = await Promise.all([
       pool.query(
         `SELECT c.id, c.first_names, c.surname, c.next_review_date, c.next_review_type,
                 c.review_cycle, c.adviser_id, u.name AS adviser_name,
@@ -74,6 +91,22 @@ const opsRoutes: FastifyPluginAsync = async (fastify) => {
           GROUP BY u.id, u.name
           ORDER BY u.name`
       ),
+      // last_contact_date is NULL for a client with no contact_log rows at
+      // all - those are the most silent of all, so NULLS FIRST puts them
+      // ahead of merely-overdue clients in the "longest silent first" sort.
+      pool.query(
+        `SELECT c.id, c.first_names, c.surname, c.adviser_id, u.name AS adviser_name,
+                MAX(cl.contact_date) AS last_contact_date,
+                (CURRENT_DATE - MAX(cl.contact_date)) AS days_since_contact
+           FROM clients c
+           JOIN users u ON u.id = c.adviser_id
+           LEFT JOIN contact_log cl ON cl.client_id = c.id AND cl.deleted_at IS NULL
+          WHERE c.deleted_at IS NULL
+          GROUP BY c.id, c.first_names, c.surname, c.adviser_id, u.name
+         HAVING MAX(cl.contact_date) IS NULL OR MAX(cl.contact_date) <= CURRENT_DATE - $1::int
+          ORDER BY MAX(cl.contact_date) ASC NULLS FIRST, c.surname, c.first_names`,
+        [quietDays]
+      ),
     ]);
 
     const reviewsDue = reviewsResult.rows;
@@ -105,6 +138,8 @@ const opsRoutes: FastifyPluginAsync = async (fastify) => {
       reviewsDue,
       pipeline,
       workload: workloadResult.rows,
+      goingQuiet: goingQuietResult.rows,
+      quietDays,
     };
   });
 };

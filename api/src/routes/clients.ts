@@ -190,8 +190,17 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get("/api/clients/:id", async (request, reply) => {
     const id = Number((request.params as { id: string }).id);
 
-    const [clientResult, softFacts, points, meetingNotes, portfolioSummary, portfolioLog, portfolioHoldings, attachments] =
-      await Promise.all([
+    const [
+      clientResult,
+      softFacts,
+      points,
+      meetingNotes,
+      portfolioSummary,
+      portfolioLog,
+      portfolioHoldings,
+      attachments,
+      contactLog,
+    ] = await Promise.all([
         pool.query(`SELECT ${CLIENT_LIST_COLUMNS} FROM clients WHERE id = $1 AND deleted_at IS NULL`, [id]),
         pool.query(
           `SELECT id, client_id, fact_date, text, author_id, created_at
@@ -238,6 +247,15 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
             ORDER BY a.created_at DESC`,
           [id]
         ),
+        pool.query(
+          `SELECT cl.id, cl.client_id, cl.contact_date, cl.type, cl.staff_id, u.name AS staff_name,
+                  cl.note, cl.created_at
+             FROM contact_log cl
+             JOIN users u ON u.id = cl.staff_id
+            WHERE cl.client_id = $1 AND cl.deleted_at IS NULL
+            ORDER BY cl.contact_date DESC, cl.created_at DESC`,
+          [id]
+        ),
       ]);
 
     if (clientResult.rows.length === 0) {
@@ -261,6 +279,10 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
         holdings: portfolioHoldings.rows,
       },
       attachments: attachments.rows,
+      contactLog: contactLog.rows,
+      // Rows are already ordered contact_date DESC, so the first row (if
+      // any) is the most recent contact - no separate MAX() query needed.
+      lastContactDate: contactLog.rows[0]?.contact_date ?? null,
     };
   });
 

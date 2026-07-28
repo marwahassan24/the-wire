@@ -4,7 +4,9 @@ import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
 import type { OpsCase, OpsDashboard } from "../types.js";
-import { Btn, Card, Pill, SectionHeading } from "../components/ui.js";
+import { Btn, Card, Input, Pill, SectionHeading } from "../components/ui.js";
+
+const DEFAULT_QUIET_DAYS = 90;
 
 function Stat({ n, label, tone }: { n: number; label: string; tone?: string }) {
   return (
@@ -24,22 +26,33 @@ function reviewPill(daysUntil: number) {
 export function OpsPage() {
   const [dashboard, setDashboard] = useState<OpsDashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [quietDays, setQuietDays] = useState(DEFAULT_QUIET_DAYS);
+  const [quietDaysInput, setQuietDaysInput] = useState(String(DEFAULT_QUIET_DAYS));
 
   function loadDashboard() {
     return api
-      .get<OpsDashboard>("/api/ops/dashboard")
+      .get<OpsDashboard>(`/api/ops/dashboard?quiet_days=${quietDays}`)
       .then(setDashboard)
       .catch(() => setError("Couldn't load the operations dashboard."));
   }
 
   useEffect(() => {
     loadDashboard();
-  }, []);
+  }, [quietDays]);
+
+  // Debounced so typing a new threshold doesn't re-fetch on every keystroke,
+  // same pattern as the client-list search box.
+  useEffect(() => {
+    const parsed = Number(quietDaysInput);
+    if (!Number.isFinite(parsed) || parsed < 1) return;
+    const handle = setTimeout(() => setQuietDays(Math.round(parsed)), 400);
+    return () => clearTimeout(handle);
+  }, [quietDaysInput]);
 
   if (error) return <div style={{ color: C.red, fontSize: C.text.small }}>{error}</div>;
   if (!dashboard) return <div style={{ color: C.inkSoft, fontSize: C.text.small }}>Loading…</div>;
 
-  const { stats, reviewsDue, pipeline, workload } = dashboard;
+  const { stats, reviewsDue, pipeline, workload, goingQuiet } = dashboard;
 
   return (
     <div>
@@ -108,6 +121,56 @@ export function OpsPage() {
             {stats.reviewsNoDateSet} client{stats.reviewsNoDateSet > 1 ? "s have" : " has"} no next review date set.
           </div>
         )}
+      </Card>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <SectionHeading>Going quiet</SectionHeading>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: C.text.small, color: C.inkSoft }}>
+          No contact in
+          <Input
+            type="number"
+            min={1}
+            value={quietDaysInput}
+            onChange={(e) => setQuietDaysInput(e.target.value)}
+            style={{ width: 64, padding: "6px 8px" }}
+          />
+          days
+        </label>
+      </div>
+      <Card style={{ marginBottom: 36 }}>
+        {goingQuiet.length === 0 && (
+          <Empty text={`Nobody's gone quiet - everyone's been contacted within ${quietDays} days.`} />
+        )}
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {goingQuiet.map((g) => (
+            <div
+              key={g.id}
+              style={{
+                display: "flex",
+                gap: 14,
+                alignItems: "baseline",
+                padding: "14px 0",
+                borderTop: `1px solid ${C.line}`,
+                flexWrap: "wrap",
+              }}
+            >
+              <Link
+                to={`/clients/${g.id}`}
+                style={{ fontWeight: 600, fontSize: C.text.body, color: C.primary, textDecoration: "none", minWidth: 180 }}
+              >
+                {g.first_names} {g.surname}
+              </Link>
+              <span style={{ fontSize: C.text.small, color: C.inkSoft, flex: 1 }}>{g.adviser_name}</span>
+              {g.last_contact_date ? (
+                <Pill tone="amber">
+                  last contact {fmtDate(g.last_contact_date)} · {g.days_since_contact}d silent
+                </Pill>
+              ) : (
+                <Pill tone="red">never contacted</Pill>
+              )}
+            </div>
+          ))}
+        </div>
       </Card>
 
       <SectionHeading>Case pipeline</SectionHeading>

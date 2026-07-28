@@ -11,8 +11,16 @@ const prepRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get("/api/clients/:id/prep", async (request, reply) => {
     const id = Number((request.params as { id: string }).id);
 
-    const [clientResult, points, recentSoftFacts, portfolioSummary, recentPortfolioLog, outstandingTasks, lastMeetingNote] =
-      await Promise.all([
+    const [
+      clientResult,
+      points,
+      recentSoftFacts,
+      portfolioSummary,
+      recentPortfolioLog,
+      outstandingTasks,
+      lastMeetingNote,
+      recentContactLog,
+    ] = await Promise.all([
         pool.query(`SELECT ${CLIENT_LIST_COLUMNS} FROM clients WHERE id = $1 AND deleted_at IS NULL`, [id]),
 
         // Open and carried points, with their full history (resolution_note,
@@ -74,6 +82,17 @@ const prepRoutes: FastifyPluginAsync = async (fastify) => {
             LIMIT 1`,
           [id]
         ),
+
+        pool.query(
+          `SELECT cl.id, cl.client_id, cl.contact_date, cl.type, cl.staff_id, u.name AS staff_name,
+                  cl.note, cl.created_at
+             FROM contact_log cl
+             JOIN users u ON u.id = cl.staff_id
+            WHERE cl.client_id = $1 AND cl.deleted_at IS NULL
+            ORDER BY cl.contact_date DESC, cl.created_at DESC
+            LIMIT ${RECENT_LIMIT}`,
+          [id]
+        ),
       ]);
 
     if (clientResult.rows.length === 0) {
@@ -93,6 +112,8 @@ const prepRoutes: FastifyPluginAsync = async (fastify) => {
       },
       outstandingTasks: outstandingTasks.rows,
       lastMeetingNote: lastMeetingNote.rows[0] ?? null,
+      recentContactLog: recentContactLog.rows,
+      lastContactDate: recentContactLog.rows[0]?.contact_date ?? null,
     };
   });
 };

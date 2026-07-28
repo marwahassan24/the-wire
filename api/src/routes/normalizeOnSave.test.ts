@@ -47,6 +47,7 @@ before(async () => {
 });
 
 after(async () => {
+  await pool.query(`DELETE FROM contact_log WHERE client_id = $1`, [clientId]);
   await pool.query(`DELETE FROM tasks WHERE client_id = $1`, [clientId]);
   await pool.query(`DELETE FROM case_events WHERE case_id IN (SELECT id FROM cases WHERE client_id = $1)`, [
     clientId,
@@ -174,4 +175,14 @@ test("case title is normalised on create and on edit; case_events note is normal
     [created.json().id]
   );
   assert.equal(rows[0].note, normalized);
+});
+
+test("contact log note is normalised on create", async () => {
+  const created = await app.inject({
+    method: "POST",
+    url: `/api/clients/${clientId}/contact-log`,
+    headers: { cookie },
+    payload: { type: "call", staff_id: userId, note: withDash },
+  });
+  assert.equal(created.json().note, normalized);
 });
