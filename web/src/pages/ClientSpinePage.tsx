@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { theme as C } from "../theme.js";
 import { api } from "../api.js";
@@ -71,6 +71,11 @@ export function ClientSpinePage() {
     return initial;
   });
   const [activeSection, setActiveSection] = useState<string>(SECTIONS[0].id);
+  // While a sidebar click's smooth-scroll animation is still settling, the
+  // scroll-spy effect below should leave the clicked section highlighted
+  // rather than recompute mid-flight - see jumpToSection.
+  const suppressScrollSpyRef = useRef(false);
+  const suppressScrollSpyTimerRef = useRef<number | undefined>(undefined);
   // TasksSection fetches its own tasks once on mount (GET /api/tasks has
   // no client filter, so it self-fetches and filters client-side) - it has
   // no way to know a saved meeting note just created new ones elsewhere on
@@ -106,29 +111,81 @@ export function ClientSpinePage() {
       saveSectionPrefs(next);
       return next;
     });
-    document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Trust the click immediately rather than waiting for the scroll-spy
+    // effect to work it out from scroll position. Near the end of the
+    // page, several short collapsed sections can end up sharing a single
+    // screenful with no room to scroll between them, which makes "closest
+    // to the trigger line" genuinely ambiguous - but there's nothing
+    // ambiguous about which section the user just asked to see. Suppress
+    // the passive scroll-spy recompute until the resulting animation has
+    // had time to settle, then let it resume tracking manual scrolling.
+    setActiveSection(sectionId);
+    suppressScrollSpyRef.current = true;
+    window.clearTimeout(suppressScrollSpyTimerRef.current);
+    suppressScrollSpyTimerRef.current = window.setTimeout(() => {
+      suppressScrollSpyRef.current = false;
+    }, 1000);
+    // If sectionId was just opened above, its body isn't in the DOM yet -
+    // scrolling immediately would target the collapsed (shorter) layout
+    // and undershoot. Two rAFs wait for React to re-render and the browser
+    // to paint the expanded layout before scrollIntoView measures it.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
   }
 
   // Scroll-spy: highlight whichever section card is nearest the top of the
   // viewport. Section cards keep their header (and id) mounted even while
   // collapsed, so this doesn't need to depend on which sections are open.
+  //
+  // The near-top trigger band works well while there's more page left to
+  // scroll, but it breaks down for the tail of the page: once the
+  // remaining sections are short (as collapsed ones are), there isn't
+  // enough room left to scroll the last one up into the band, so it can
+  // get stuck just below it and never highlight - no matter how the
+  // section is registered. The bottom check below covers that directly:
+  // once you've scrolled as far as the page allows, the last section is
+  // active, full stop.
   useEffect(() => {
     if (!client) return;
-    const elements = SECTIONS.map((s) => document.getElementById(s.id)).filter((el): el is HTMLElement => !!el);
-    if (elements.length === 0) return;
+    const ids = SECTIONS.map((s) => s.id);
+    const lastSectionId = ids[ids.length - 1];
+    let frame: number | null = null;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((e) => e.isIntersecting);
-        if (visible.length === 0) return;
-        visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        setActiveSection(visible[0].target.id);
-      },
-      { rootMargin: "-10% 0px -70% 0px", threshold: 0 }
-    );
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [client]);
+    function updateActive() {
+      frame = null;
+      if (suppressScrollSpyRef.current) return;
+      const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
+      if (atBottom) {
+        setActiveSection(lastSectionId);
+        return;
+      }
+      const triggerY = window.scrollY + window.innerHeight * 0.1;
+      let current = ids[0];
+      for (const sectionId of ids) {
+        const el = document.getElementById(sectionId);
+        if (el && el.getBoundingClientRect().top + window.scrollY <= triggerY) {
+          current = sectionId;
+        }
+      }
+      setActiveSection(current);
+    }
+
+    function onScroll() {
+      if (frame === null) frame = requestAnimationFrame(updateActive);
+    }
+
+    updateActive();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
+  }, [client, openSections]);
 
   if (error) return <div style={{ color: C.red, fontSize: C.text.small }}>{error}</div>;
   if (!client) return <div style={{ color: C.inkSoft, fontSize: C.text.small }}>Loading…</div>;
