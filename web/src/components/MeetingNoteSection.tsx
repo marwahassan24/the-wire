@@ -56,7 +56,7 @@ export function MeetingNoteSection({
   return (
     <CollapsibleSection
       id="meeting-note"
-      title="3. Meeting note (client-visible)"
+      title="3. Meeting note"
       summary={summary}
       open={open}
       onToggle={onToggle}

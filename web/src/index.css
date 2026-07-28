@@ -31,7 +31,7 @@ body {
 
 .spine-sidebar {
   flex-shrink: 0;
-  width: 190px;
+  width: 200px;
   position: sticky;
   top: 20px;
 }
@@ -40,6 +40,21 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+/* The static reset/layout for a sidebar entry lives here rather than as an
+   inline style, specifically so the mobile override below can win without
+   needing !important - only the active-state colours (fontWeight/color/
+   background) are still set inline per entry, since those depend on
+   activeSection at render time. */
+.spine-sidebar-list button {
+  all: unset;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.35;
+  padding: 7px 10px;
+  border-radius: 7px;
+  white-space: normal;
 }
 
 .spine-main {
@@ -68,5 +83,13 @@ body {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     gap: 8px;
+  }
+
+  /* The desktop column lets entries wrap; the horizontal scrolling chip
+     row instead wants each entry to stay on one line and simply scroll
+     off-screen. Same specificity, later in the cascade - this wins
+     whenever the media query matches, no !important needed. */
+  .spine-sidebar-list button {
+    white-space: nowrap;
   }
 }

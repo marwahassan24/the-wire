@@ -160,12 +160,6 @@ export function PrepPage() {
                 type="button"
                 onClick={() => jumpToSection(s.id)}
                 style={{
-                  all: "unset",
-                  cursor: "pointer",
-                  fontSize: C.text.small,
-                  padding: "7px 10px",
-                  borderRadius: 7,
-                  whiteSpace: "nowrap",
                   fontWeight: activeSection === s.id ? 700 : 500,
                   color: activeSection === s.id ? C.primary : C.inkSoft,
                   background: activeSection === s.id ? C.primarySoft : "transparent",
@@ -178,12 +172,6 @@ export function PrepPage() {
               type="button"
               onClick={() => jumpToSection(RESET_ID)}
               style={{
-                all: "unset",
-                cursor: "pointer",
-                fontSize: C.text.small,
-                padding: "7px 10px",
-                borderRadius: 7,
-                whiteSpace: "nowrap",
                 fontWeight: activeSection === RESET_ID ? 700 : 500,
                 color: activeSection === RESET_ID ? C.primary : C.inkSoft,
                 background: activeSection === RESET_ID ? C.primarySoft : "transparent",

@@ -31,7 +31,7 @@ import { OutstandingItemsSection } from "../components/OutstandingItemsSection.j
 const SECTIONS: { id: string; title: string; defaultOpen: boolean }[] = [
   { id: "soft-facts", title: "1. Soft facts", defaultOpen: true },
   { id: "points", title: "2. Points to note and discuss", defaultOpen: true },
-  { id: "meeting-note", title: "3. Meeting note (client-visible)", defaultOpen: true },
+  { id: "meeting-note", title: "3. Meeting note", defaultOpen: true },
   { id: "portfolio", title: "4. Portfolio detail", defaultOpen: true },
   { id: "documents", title: "5. Documents", defaultOpen: false },
   { id: "tasks", title: "6. Tasks", defaultOpen: false },
@@ -177,12 +177,6 @@ export function ClientSpinePage() {
                 type="button"
                 onClick={() => jumpToSection(s.id)}
                 style={{
-                  all: "unset",
-                  cursor: "pointer",
-                  fontSize: C.text.small,
-                  padding: "7px 10px",
-                  borderRadius: 7,
-                  whiteSpace: "nowrap",
                   fontWeight: activeSection === s.id ? 700 : 500,
                   color: activeSection === s.id ? C.primary : C.inkSoft,
                   background: activeSection === s.id ? C.primarySoft : "transparent",
