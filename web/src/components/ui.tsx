@@ -118,7 +118,7 @@ export function CollapsibleSection({
           all: "unset",
           boxSizing: "border-box",
           display: "flex",
-          alignItems: "baseline",
+          alignItems: "center",
           justifyContent: "space-between",
           gap: 12,
           width: "100%",
@@ -132,8 +132,9 @@ export function CollapsibleSection({
         <span
           style={{
             flexShrink: 0,
-            fontSize: 12,
-            color: C.inkSoft,
+            fontSize: 22,
+            lineHeight: 1,
+            color: C.ink,
             transform: open ? "rotate(180deg)" : undefined,
             transition: "transform 0.15s ease",
           }}
