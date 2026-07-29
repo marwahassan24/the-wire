@@ -367,7 +367,7 @@
 
     <div class="prompt-preview" id="prompt-preview">
       <div class="prompt-preview-header">
-        <span class="prompt-preview-label">Prompt that will be sent to the AI</span>
+        <span class="prompt-preview-label">Prompt that will be sent to ChatGPT</span>
         <button class="copy-btn" id="copy-btn" onclick="copyPrompt()">Copy</button>
       </div>
       <div class="prompt-text" id="prompt-text"></div>
@@ -387,20 +387,14 @@
   /* =====================================================================
      SHARED TEAM USAGE COUNTER  —  runs off The Wire's own database
      ---------------------------------------------------------------------
-     This is the ONLY block that changed from the standalone tool.
-     Instead of localStorage (per-browser) or Supabase, it calls two
-     endpoints in The Wire's own backend, so "This week" and "Total"
-     are the SAME shared number for everyone, on every device.
-
-     The two endpoints (built inside The Wire — see the integration note):
-       POST  {USAGE_LOG_ENDPOINT}   -> records one use  (body: {mode, model})
-       GET   {USAGE_STATS_ENDPOINT} -> returns {week, total}
-
-     The Wire's web app and its API are two separate origins (a static
-     site plus a separate Fastify service - see render.yaml), not one
-     server, so a same-origin relative path would 404. These build an
-     absolute URL to the API instead. Keep the production hostname below
-     in sync with render.yaml's VITE_API_URL if that ever changes.
+     Calls two endpoints in The Wire's own backend, so "This week" and
+     "Total" are the SAME shared number for everyone, on every device -
+     not a per-browser localStorage count. The Wire's web app and its API
+     are two separate origins (a static site plus a separate Fastify
+     service - see render.yaml), not one server, so these build an
+     absolute URL rather than a same-origin relative path. Keep the
+     production hostname below in sync with render.yaml's VITE_API_URL
+     if that ever changes.
   ===================================================================== */
   const API_ORIGIN = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
@@ -454,61 +448,64 @@
 
   function buildPrompt(msg) {
     if (currentMode === 'reply') {
-      return `You are helping the admin team at Town Close Financial Planning (TCFP) draft a reply to a client portal message.
+      return `You are helping the admin team at Town Close Financial Planning draft a reply to a client portal message.
 
-ABOUT TOWN CLOSE — THE VOICE YOU MUST WRITE IN:
-Town Close is a warm, human-centred independent financial planning firm in the UK. The guiding belief: most people don't struggle with money because they lack information — they struggle because they've been alone with uncertainty too long. Our job is to make clients feel less alone with their money.
-Write with these firm principles in mind:
-- Calm is a professional skill. Clients borrow their emotional tone from us. If the reply feels rushed or anxious, they feel rushed and anxious. Be steady.
-- Warm without being sentimental. Human, not corporate. Not stiff, not gushing.
-- Plain English. No jargon unless the client used it first. No clichés (never "I hope this email finds you well").
-- On fees: explain once, clearly. Never defend, over-justify, or apologise for them.
-- Reassurance is a legitimate outcome. If the honest answer is "nothing needs to change" or "you're on track", say so plainly — do NOT manufacture an action or task just to look useful. Sometimes the most valuable reply is calm confirmation.
+Town Close is a warm, human-centred independent financial planning firm based in the UK. Their ethos is "Money, made human" — real advice from real people, plain English, no jargon, no cold corporate language.
 
-BEFORE YOU WRITE — think privately through these four questions (this is TCFP's standard reflection method for client messages; do NOT include this analysis in the output, just let it shape the reply):
-1. What might this client be feeling beneath the surface of this message?
-2. What assumptions might I be making that could be wrong?
-3. What reassurance might this client need?
-4. What tone risks should I avoid here?
+STEP 1 — CHECK BEFORE YOU ACT:
+Before drafting anything, check whether you actually have enough to move this forward properly:
+- Do you know WHY the client wants this? (e.g. what the meeting, call or query is actually about)
+- Is anything ambiguous — dates, times, "which Wednesday", who's involved?
 
-NOW DRAFT THE REPLY. It should:
-- Be warm, steady, human and concise — no waffle or filler
-- Genuinely address what they asked (and what they may be worried about underneath), not just acknowledge receipt
-- LEAN IN and own the next step rather than lobbing it back. Prefer "I'll call you Thursday to book a time" over "let me know if Thursday works"; prefer "I'll chase this and come back to you by Friday" over "let us know if you need anything". Never leave the client having to chase us.
-- Be honest about what you don't know: if the query needs an adviser or a fact you don't have, say a real person will confirm — don't invent figures, tax treatment, or specifics.
-- Be ready for the team member to review, personalise, and send
+HARD RULE ON THE DIARY: If the request involves a meeting, call or appointment, do NOT offer, promise, imply or hand out any specific dates, times or availability unless the client has already given an unambiguous date AND you know what the meeting is about. Never use "I'll check the diary and come back with times" as a way of moving a vague request forward. A bare weekday (e.g. "Wednesday") is ambiguous — it could mean this week or next — and is not enough on its own. Note: today is ${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}.
 
-Write the reply body only — no subject line, no salutation (e.g. no "Dear [name]"), no sign-off. The team member will add those themselves.
+STEP 2 — RESPOND:
 
-After your draft, add a new line at the end:
-CONFIDENCE: [X%] — one sentence on any assumptions you made or anything you're unsure about (especially any figures or technical points a human must verify).
-If your confidence is below 80%, revise the draft first before responding.
+CASE A — Something essential is missing or ambiguous (this includes ANY vague meeting/call request, e.g. "I want a meeting on Friday"):
+Do NOT produce a quiet one-line reply and do NOT check or offer the diary. Instead, address the TEAM MEMBER first and give them two things:
+1. A short line telling them this isn't ready to book yet and why — then list ALL the details they need to gather from the client before anything goes in the diary. For a meeting/call that normally means:
+   - Which specific date (a bare weekday like "Friday" is ambiguous — this week or next)
+   - What they'd like to discuss (the purpose of the meeting)
+   - Whether it's just them, or their partner/spouse too
+   - Preferred format — in person, video or phone
+   (Include any of these that are genuinely missing; skip any the client has already given.)
+2. A warm, ready-to-send reply the team member can send BACK TO THE CLIENT that asks for all of those missing details in one go — framed as making sure they get the right person and the most useful conversation.
+Label the two parts clearly: "BEFORE YOU BOOK — gather these:" and "SUGGESTED REPLY TO THE CLIENT:".
+
+CASE B — You genuinely have everything needed (an unambiguous date AND you know what it's about):
+Draft a warm reply that moves the query forward.
+
+Either way, any client-facing text should:
+- Be warm, human, and professional — not cold or stiff
+- Be concise — no waffle or filler sentences
+- Use plain English throughout
+- Avoid clichés like "I hope this email finds you well"
+- Be reply body only — no subject line, no salutation (e.g. no "Dear [name]"), no sign-off. The team member will add those themselves.
+
+After your response, add a new line at the end:
+CONFIDENCE: [X%] — one sentence on anything still unclear. (This rates your response — it does not excuse acting on missing information. If key info is missing, the correct response is one that gathers it.)
 
 CLIENT MESSAGE:
 "${msg}"`;
     } else if (currentMode === 'escalate') {
-      return `You are helping the admin team at Town Close Financial Planning (TCFP) handle an incoming client portal message.
+      return `You are helping the admin team at Town Close Financial Planning handle an incoming client portal message.
 
-Town Close is a warm, human-centred financial planning firm. The guiding belief is that clients should never feel alone with their money, and that calm, steady handling is a professional skill. An escalation is not a forward — it's you doing the anticipatory thinking so the adviser can act straight away.
+Town Close is a warm, human-centred financial planning firm. Their ethos is "Money, made human."
 
 STEP 1 — TRIAGE FIRST:
-Assess whether the message contains enough context to brief an adviser usefully. Ask: do we know WHY they want what they're asking for, and what outcome they're really after?
+Before doing anything else, assess whether the client's message contains enough information to act on. Ask yourself: do we know WHY they want what they're asking for? Do we have enough context to brief an advisor usefully?
 
-If the message is too vague to escalate properly (e.g. "I want a meeting", "can someone call me", "I have a question about my money"):
-- Do NOT draft an escalation.
-- In 1 sentence, say why you can't escalate yet (what context is missing).
-- Draft a short, warm reply to send BACK TO THE CLIENT to gather the missing detail — framed as wanting them to get the right person and the most useful conversation, never as a hurdle.
-- Lean in: offer to call or propose a time rather than leaving it open-ended.
+If the message is too vague to escalate properly (e.g. "I want a meeting", "I want a meeting on Wednesday", "can someone call me", "I have a question about my money") — do NOT draft an escalation. Note: a day or date on its own does NOT make it specific enough — you still need to know what it's about, and a bare weekday like "Wednesday" is ambiguous (this week or next). Instead:
+- Briefly explain in 1 sentence why you can't escalate yet (missing context)
+- Draft a short, warm reply to send BACK TO THE CLIENT asking for the missing detail
+- The reply should be friendly and helpful — explain you want to make sure they get the right person and the most useful conversation
 - Label it clearly: "SUGGESTED REPLY TO CLIENT (to gather more info before escalating):"
 
 If the message HAS enough context to escalate — draft an internal escalation note that:
 - Summarises the client's query in your own words (not a copy-paste)
-- Names the EMOTIONAL temperature, not just the facts: is the client anxious, frustrated, distressed, questioning our advice, or losing trust? This shapes how the adviser opens the conversation.
-- Flags any hard deadline, meeting date, or time pressure explicitly and up front.
-- Flags SENSITIVITY: anything touching a complaint, conflicting or contested prior advice, a possible error on our side, retirement/major-life decisions, or money the client is relying on. These need adviser eyes fast and a careful tone.
-- Gives a clear, specific suggested next step or the single decision the adviser needs to make.
-- Does NOT attempt to answer technical/tax/planning points yourself or invent figures — surface them as things the adviser must address.
-- Is short and scannable.
+- Flags any urgency, sensitivity, or deadline
+- Includes a clear suggested next step or ask for the advisor
+- Is short and scannable
 - Label it clearly: "ESCALATION NOTE FOR ADVISOR:"
 
 Write message body only in either case — no subject line, no salutation, no sign-off.
@@ -520,34 +517,33 @@ If your confidence is below 80%, revise your response first before sending.
 CLIENT PORTAL MESSAGE:
 "${msg}"`;
     } else {
-      return `You are helping a team member at Town Close Financial Planning (TCFP) improve an internal message before they send it, using the firm's "+1 Thinking" discipline.
+      return `You are helping a team member at Town Close Financial Planning improve an internal message before they send it.
 
-+1 THINKING (the firm's own standard):
-Add the one anticipatory thought that improves clarity or reduces friction — the thing that saves a round of back-and-forth. The rule at TCFP is: standardise the middle, personalise the edges, and never make a colleague chase you for basics. A good internal message — especially one asking a colleague or adviser to act — should let them act, or make one clear decision, without a single follow-up question.
+Town Close is a warm, human-centred financial planning firm. Their ethos is "Money, made human."
 
-CONSTRAINTS (important — do not break these):
-- Keep it natural, not corporate. This is a note between colleagues, not a memo.
-- Do not add unnecessary length. Shorter is better if it's complete.
-- Do not over-engineer or pad with process. Add the ONE meaningful improvement that matters most, not ten hypotheticals.
+A good internal message — especially one requesting action from an advisor or colleague — should give the recipient everything they need to act without having to ask follow-up questions.
 
 STEP 1 — ASSESS THE DRAFT:
-Read it and ask what the recipient would need to act immediately. Common gaps:
-- The purpose or context (why is this happening / why now?)
-- Who is involved — client name, whether it's an individual or a couple
-- Logistics (Zoom vs in-person, which email, date/time, where to log the task)
-- Background the recipient doesn't already hold
-- A clear ask, owner, and — where relevant — a deadline or next checkpoint
+Read the team member's message. Ask yourself what the recipient would need in order to act on this immediately. Common gaps include:
+- The purpose or context of the request (why is this happening?)
+- Who is involved — client name, whether it's one person or a couple
+- Format or logistics (Zoom vs in-person, which email address to use, etc.)
+- Relevant background the recipient doesn't have
+- A clear ask or recommended next step
 
 STEP 2 — REWRITE IT:
-Rewrite so it's complete and actionable in one read. Where the original is passive ("someone should follow up"), make it own the action ("I'll do X by Friday; can you confirm Y before then?").
+Rewrite the message so it's complete and actionable in one read. The recipient should be able to act immediately or make a single clear decision — not reply asking for more information.
 
-Keep it concise and scannable, warm but efficient, and specific — real names, dates, times, formats.
+Keep it:
+- Concise and scannable — this is internal, not a client email
+- Warm but efficient
+- Specific — include names, dates, times, and formats where relevant
 
 Write the improved message body only — no subject line, no salutation, no sign-off.
 
 After your rewrite, add a new line:
 CONFIDENCE: [X%] — one sentence on any assumptions you made or anything still unclear.
-If your confidence is below 80%, flag exactly what's missing and suggest the team member fills it in before sending, rather than inventing detail.
+If your confidence is below 80%, flag what's missing and suggest the team member fills it in before sending.
 
 TEAM MEMBER'S DRAFT:
 "${msg}"`;
