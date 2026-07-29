@@ -394,11 +394,14 @@
      service - see render.yaml), not one server, so these build an
      absolute URL rather than a same-origin relative path. Keep the
      production hostname below in sync with render.yaml's VITE_API_URL
-     if that ever changes.
+     if that ever changes - "the-wire-api.onrender.com" (the obvious
+     guess) was already taken by an unrelated app when this was first
+     deployed, so Render assigned this project the "-0bac" suffixed one
+     instead. Confirmed against the live Render dashboard, not guessed.
   ===================================================================== */
   const API_ORIGIN = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
-    : 'https://the-wire-api.onrender.com';
+    : 'https://the-wire-api-0bac.onrender.com';
   const USAGE_LOG_ENDPOINT   = API_ORIGIN + '/api/ai-assistant/usage';
   const USAGE_STATS_ENDPOINT = API_ORIGIN + '/api/ai-assistant/usage/stats';
 

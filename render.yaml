@@ -82,6 +82,12 @@ services:
       # Vite bakes VITE_-prefixed vars into the build at build time, not
       # read at runtime - if the-wire-api's hostname ever changes, this
       # needs a rebuild (a manual deploy of this service), not just an
-      # env var update.
+      # env var update. "the-wire-api.onrender.com" (the obvious name)
+      # was already taken by an unrelated app when this was deployed, so
+      # Render assigned "-0bac" instead - confirmed against the live
+      # Render dashboard. web/public/tools/ai-reply-tool.html hardcodes
+      # this same value independently (it's a static asset Vite doesn't
+      # process, so it can't read this env var) - keep both in sync if
+      # the API is ever recreated under a different hostname.
       - key: VITE_API_URL
-        value: https://the-wire-api.onrender.com
+        value: https://the-wire-api-0bac.onrender.com
