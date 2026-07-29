@@ -203,6 +203,7 @@ export interface PrepPack extends ClientSummary {
     updated_by: number | null;
     updated_at: string | null;
     recentLogs: PortfolioLogEntry[];
+    holdings: PortfolioHolding[];
   };
   outstandingTasks: PrepTask[];
   lastMeetingNote: MeetingNote | null;

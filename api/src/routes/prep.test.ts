@@ -151,6 +151,20 @@ test("caps the recent portfolio log at 5 and includes the current summary", asyn
   assert.equal(portfolio.recentLogs[0].text, "Log entry 7");
 });
 
+test("includes structured holdings, same as the client spine, for the prep view's asset-allocation chart", async () => {
+  await pool.query(
+    `INSERT INTO portfolio_holdings (client_id, source, provider, holding_name, asset_class, value, currency, raw)
+     VALUES ($1, 'investment', 'Fidelity', 'Global Equity Fund', 'Equity', 50000, 'GBP', '{}')`,
+    [clientId]
+  );
+
+  const res = await getPrep();
+  const holdings = res.json().portfolio.holdings;
+  assert.equal(holdings.length, 1);
+  assert.equal(holdings[0].holding_name, "Global Equity Fund");
+  assert.equal(holdings[0].asset_class, "Equity");
+});
+
 test("outstanding tasks excludes done, includes awaiting_sense_check and confirmed", async () => {
   const manual = await app.inject({
     method: "POST",

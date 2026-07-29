@@ -17,6 +17,7 @@ const prepRoutes: FastifyPluginAsync = async (fastify) => {
       recentSoftFacts,
       portfolioSummary,
       recentPortfolioLog,
+      holdings,
       outstandingTasks,
       lastMeetingNote,
       recentContactLog,
@@ -54,6 +55,16 @@ const prepRoutes: FastifyPluginAsync = async (fastify) => {
             WHERE client_id = $1 AND deleted_at IS NULL
             ORDER BY entry_date DESC, created_at DESC
             LIMIT ${RECENT_LIMIT}`,
+          [id]
+        ),
+
+        // Full holdings, not capped like the log above - the asset-allocation
+        // chart needs the complete picture, same as the client spine's.
+        pool.query(
+          `SELECT id, client_id, moneyinfo_holding_id, source, provider, plan_type, holding_name,
+                  asset_class, value, currency, as_of_date, synced_at
+             FROM portfolio_holdings WHERE client_id = $1
+            ORDER BY source, provider NULLS LAST, holding_name NULLS LAST`,
           [id]
         ),
 
@@ -109,6 +120,7 @@ const prepRoutes: FastifyPluginAsync = async (fastify) => {
         updated_by: portfolioSummary.rows[0]?.updated_by ?? null,
         updated_at: portfolioSummary.rows[0]?.updated_at ?? null,
         recentLogs: recentPortfolioLog.rows,
+        holdings: holdings.rows,
       },
       outstandingTasks: outstandingTasks.rows,
       lastMeetingNote: lastMeetingNote.rows[0] ?? null,

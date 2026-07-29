@@ -6,6 +6,7 @@ import { fmtDate } from "../format.js";
 import type { PrepPack } from "../types.js";
 import { Card, CollapsibleSection, Pill } from "../components/ui.js";
 import { CONTACT_TYPE_LABEL } from "../components/ContactLogSection.js";
+import { AssetAllocation } from "../components/AssetAllocation.js";
 
 const POINT_TONE = { open: "amber", carried: "amber", resolved: "plain" } as const;
 const TASK_STATUS_TONE = { awaiting_sense_check: "amber", confirmed: "primary", done: "plain" } as const;
@@ -172,6 +173,10 @@ export function PrepPage() {
   const softFactsSummary = prep.recentSoftFacts.length === 0 ? "(empty)" : `(${prep.recentSoftFacts.length})`;
   const tasksSummary = prep.outstandingTasks.length === 0 ? "(empty)" : `(${prep.outstandingTasks.length} open)`;
   const hasPortfolioSummary = prep.portfolio.summary.trim().length > 0;
+  const portfolioSummaryLines = prep.portfolio.summary
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
   const portfolioSummary =
     !hasPortfolioSummary && prep.portfolio.recentLogs.length === 0
       ? "- empty"
@@ -321,14 +326,18 @@ export function PrepPage() {
               open={openSections["portfolio"]}
               onToggle={() => toggleSection("portfolio")}
             >
-              <div
-                style={{
-                  fontSize: C.text.body,
-                  lineHeight: 1.6,
-                  marginBottom: prep.portfolio.recentLogs.length ? 20 : 0,
-                }}
-              >
-                {prep.portfolio.summary || <Empty />}
+              <AssetAllocation holdings={prep.portfolio.holdings} />
+
+              <div style={{ marginBottom: prep.portfolio.recentLogs.length ? 20 : 0 }}>
+                {portfolioSummaryLines.length > 0 ? (
+                  <ul style={{ margin: 0, paddingLeft: 20, fontSize: C.text.body, lineHeight: 1.6, color: C.ink }}>
+                    {portfolioSummaryLines.map((line, i) => (
+                      <li key={i}>{line}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <Empty />
+                )}
               </div>
               {prep.portfolio.recentLogs.length > 0 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
