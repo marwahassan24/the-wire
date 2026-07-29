@@ -132,7 +132,7 @@ export function CollapsibleSection({
         <span
           style={{
             flexShrink: 0,
-            fontSize: 22,
+            fontSize: 44,
             lineHeight: 1,
             color: C.ink,
             transform: open ? "rotate(180deg)" : undefined,
