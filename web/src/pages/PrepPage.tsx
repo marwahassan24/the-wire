@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { theme as C } from "../theme.js";
 import { api } from "../api.js";
-import { fmtDate } from "../format.js";
+import { fmtDate, splitIntoBulletLines } from "../format.js";
 import type { PrepPack } from "../types.js";
 import { Card, CollapsibleSection, Pill } from "../components/ui.js";
 import { CONTACT_TYPE_LABEL } from "../components/ContactLogSection.js";
@@ -173,10 +173,7 @@ export function PrepPage() {
   const softFactsSummary = prep.recentSoftFacts.length === 0 ? "(empty)" : `(${prep.recentSoftFacts.length})`;
   const tasksSummary = prep.outstandingTasks.length === 0 ? "(empty)" : `(${prep.outstandingTasks.length} open)`;
   const hasPortfolioSummary = prep.portfolio.summary.trim().length > 0;
-  const portfolioSummaryLines = prep.portfolio.summary
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const portfolioSummaryLines = splitIntoBulletLines(prep.portfolio.summary);
   const portfolioSummary =
     !hasPortfolioSummary && prep.portfolio.recentLogs.length === 0
       ? "- empty"

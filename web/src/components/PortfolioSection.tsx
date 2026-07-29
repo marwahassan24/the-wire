@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { theme as C } from "../theme.js";
 import { api, ApiError } from "../api.js";
-import { fmtDate } from "../format.js";
+import { fmtDate, splitIntoBulletLines } from "../format.js";
 import type { Portfolio, PortfolioLogEntry } from "../types.js";
 import { AssetAllocation } from "./AssetAllocation.js";
 import { Btn, CollapsibleSection, Input, Textarea } from "./ui.js";
@@ -36,10 +36,7 @@ export function PortfolioSection({
   const [addingLog, setAddingLog] = useState(false);
   const [logError, setLogError] = useState<string | null>(null);
 
-  const summaryLines = portfolio.summary
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const summaryLines = splitIntoBulletLines(portfolio.summary);
 
   async function saveSummary() {
     setSavingSummary(true);
