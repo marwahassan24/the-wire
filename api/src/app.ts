@@ -21,6 +21,7 @@ import attachmentsRoutes from "./routes/attachments.js";
 import usersRoutes from "./routes/users.js";
 import contactLogRoutes from "./routes/contactLog.js";
 import outstandingItemsRoutes from "./routes/outstandingItems.js";
+import aiAssistantUsageRoutes from "./routes/aiAssistantUsage.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   // Fastify's default ajv config silently strips unknown body/query fields
@@ -63,6 +64,10 @@ export async function buildApp(): Promise<FastifyInstance> {
     await protectedRoutes.register(contactLogRoutes);
     await protectedRoutes.register(outstandingItemsRoutes);
   });
+
+  // Public - see aiAssistantUsage.ts for why this stays outside the
+  // authenticated group above.
+  await app.register(aiAssistantUsageRoutes);
 
   app.get("/health", async () => {
     const { rows } = await pool.query<{ ok: number }>("select 1 as ok");

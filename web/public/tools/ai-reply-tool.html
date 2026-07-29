@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Town Close · Portal Reply Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --tc-purple: #2f215f;
+    --tc-purple-deep: #25184f;
+    --tc-pink: #ec4aa0;
+    --tc-pink-hover: #d83c8e;
+    --tc-white: #ffffff;
+    --tc-offwhite: #fbfaf8;
+    --tc-cream: #f4f1ec;
+    --tc-text: #111018;
+    --tc-muted: #4f4a5f;
+    --tc-soft-purple: #f2edf8;
+    --tc-soft-pink: #fff0f7;
+    --tc-border: #e7e1dc;
+    --tc-success: #2f215f;
+    --tc-success-hover: #25184f;
+  }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--tc-white);
+    color: var(--tc-text);
+    min-height: 100vh;
+  }
+  .header {
+    background: var(--tc-purple);
+    padding: 1.15rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .logo-text {
+    font-family: 'DM Sans', sans-serif;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+  .logo-text span { color: var(--tc-pink); }
+  .header-sub {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.62);
+    margin-top: 3px;
+  }
+  .badge {
+    background: var(--tc-white);
+    color: var(--tc-purple);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.55rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+  }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .usage-counter {
+    display: flex;
+    gap: 14px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 6px;
+    padding: 0.45rem 0.9rem;
+  }
+  .usage-stat { text-align: center; }
+  .usage-stat .num {
+    color: var(--tc-pink);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+  .usage-stat .lbl {
+    color: rgba(255,255,255,0.62);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  @media (max-width: 560px) {
+    .badge { display: none; }
+  }
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 4rem;
+  }
+  .intro { margin-bottom: 1.75rem; }
+  .intro h1 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: clamp(2rem, 4vw, 3.1rem);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.85rem;
+    line-height: 1.12;
+    color: var(--tc-text);
+  }
+  .intro h1::after {
+    content: '';
+    display: inline-block;
+    width: 0.82em;
+    height: 0.72em;
+    background: var(--tc-pink);
+    margin-left: 0.18em;
+    transform: translateY(0.08em);
+  }
+  .intro p {
+    font-size: 15.5px;
+    color: var(--tc-text);
+    line-height: 1.72;
+    max-width: 610px;
+  }
+  .chatgpt-info {
+    background: var(--tc-soft-purple);
+    border: 1px solid #ddd3ec;
+    border-radius: 6px;
+    padding: 1rem 1.1rem;
+    margin-bottom: 1.5rem;
+    font-size: 13.5px;
+    color: var(--tc-purple);
+    line-height: 1.6;
+  }
+  .chatgpt-info strong { font-weight: 500; }
+  .tabs {
+    display: flex;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--tc-purple);
+    margin-bottom: 1.5rem;
+    background: var(--tc-white);
+  }
+  .tab {
+    flex: 1;
+    padding: 0.9rem 1rem;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    border: none;
+    background: var(--tc-white);
+    color: var(--tc-purple);
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .tab:not(:last-child) { border-right: 1px solid var(--tc-purple); }
+  .tab.active { background: var(--tc-purple); color: var(--tc-white); }
+  .tab:hover:not(.active) { background: var(--tc-soft-purple); color: var(--tc-purple-deep); }
+  .card {
+    background: var(--tc-offwhite);
+    border-radius: 8px;
+    border: 1px solid var(--tc-border);
+    padding: 1.85rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 14px 40px rgba(47,33,95,0.06);
+  }
+  .mode-desc {
+    font-size: 13.5px;
+    color: var(--tc-muted);
+    line-height: 1.65;
+    margin-bottom: 1.5rem;
+    padding: 0.95rem 1.1rem;
+    background: var(--tc-white);
+    border-radius: 6px;
+    border-left: 7px solid var(--tc-pink);
+  }
+  .mode-desc strong { color: var(--tc-text); font-weight: 500; }
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--tc-purple);
+    margin-bottom: 0.55rem;
+  }
+  textarea {
+    width: 100%;
+    border: 1px solid var(--tc-border);
+    border-radius: 6px;
+    padding: 1rem 1.1rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--tc-text);
+    resize: vertical;
+    min-height: 145px;
+    background: var(--tc-white);
+    line-height: 1.7;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  textarea:focus {
+    border-color: var(--tc-pink);
+    box-shadow: 0 0 0 3px rgba(236,74,160,0.12);
+  }
+  textarea::placeholder { color: #918aa0; }
+  .error-msg {
+    font-size: 13px;
+    color: #8c1f58;
+    margin-top: 0.75rem;
+    display: none;
+    padding: 0.75rem 1rem;
+    background: var(--tc-soft-pink);
+    border-radius: 6px;
+    border-left: 7px solid var(--tc-pink);
+  }
+  .btn-row { display: flex; gap: 10px; margin-top: 1.5rem; flex-wrap: wrap; }
+  .send-btn {
+    flex: 1;
+    min-width: 140px;
+    padding: 0.98rem 1.1rem;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .send-btn:hover { transform: translateY(-1px); }
+  .send-btn.gpt { background: var(--tc-pink); }
+  .send-btn.gpt:hover { background: var(--tc-pink-hover); }
+  .send-btn.claude { background: var(--tc-purple); }
+  .send-btn.claude:hover { background: var(--tc-purple-deep); }
+  .preview-btn {
+    width: 100%;
+    padding: 0.86rem 1.25rem;
+    background: var(--tc-white);
+    color: var(--tc-purple);
+    border: 1px solid var(--tc-purple);
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .preview-btn:hover { background: var(--tc-soft-purple); color: var(--tc-purple-deep); }
+  .prompt-preview {
+    display: none;
+    margin-top: 1rem;
+    background: var(--tc-white);
+    border: 1px solid var(--tc-border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .prompt-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--tc-border);
+    background: var(--tc-soft-purple);
+  }
+  .prompt-preview-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--tc-purple);
+  }
+  .copy-btn {
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    padding: 0.35rem 0.9rem;
+    border-radius: 4px;
+    border: 1px solid var(--tc-purple);
+    background: var(--tc-white);
+    color: var(--tc-purple);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .copy-btn:hover { background: var(--tc-purple); color: var(--tc-white); }
+  .copy-btn.copied { background: var(--tc-pink); color: white; border-color: var(--tc-pink); }
+  .prompt-text {
+    padding: 1rem 1.1rem;
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: var(--tc-text);
+    white-space: pre-wrap;
+    font-family: monospace;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+  .notice {
+    font-size: 12.5px;
+    color: var(--tc-muted);
+    margin-top: 1.1rem;
+    padding: 0.85rem 1rem;
+    background: var(--tc-white);
+    border-radius: 6px;
+    border-left: 7px solid var(--tc-pink);
+    line-height: 1.55;
+  }
+  footer {
+    background: var(--tc-purple);
+    color: rgba(255,255,255,0.72);
+    text-align: center;
+    padding: 1.25rem;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    margin-top: 2rem;
+  }
+  footer span { color: var(--tc-pink); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo-text">Town Close<span> ·</span> Portal Assistant</div>
+    <div class="header-sub">Internal use only</div>
+  </div>
+  <div class="header-right">
+    <div class="usage-counter" title="Usage across the whole team">
+      <div class="usage-stat"><div class="num" id="count-week">0</div><div class="lbl">This week</div></div>
+      <div class="usage-stat"><div class="num" id="count-total">0</div><div class="lbl">Total</div></div>
+    </div>
+    <div class="badge">AI-powered</div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="intro">
+    <h1>Client Portal Reply Tool</h1>
+    <p>Paste a message from the client portal, choose your mode, and open it straight in ChatGPT or Claude — it will arrive with everything ready to go. Always review before sending anything to a client.</p>
+  </div>
+
+  <div class="chatgpt-info">
+    <strong>🤖 How it works:</strong> Paste the client's message below and click <em>Open in ChatGPT</em> or <em>Open in Claude</em> . AI will open in a new tab with a fully built prompt — just hit send. You'll need to be logged into your ChatGPT or Claude account.
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="setMode('reply')">Reply to Client</button>
+    <button class="tab" onclick="setMode('escalate')">Escalate to Advisor</button>
+    <button class="tab" onclick="setMode('internal')">Internal Comms</button>
+  </div>
+
+  <div class="card">
+    <div class="mode-desc" id="mode-desc">
+      <strong>Client reply mode:</strong> AI will draft a warm, clear reply to the client in the Town Close voice — no jargon, no clichés. You review and personalise before sending.
+    </div>
+
+    <label for="portal-msg">Message from client portal</label>
+    <textarea id="portal-msg" placeholder="Paste the client's message here…"></textarea>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="btn-row">
+      <button class="send-btn gpt" onclick="openAI('chatgpt')">Open in ChatGPT ↗</button>
+      <button class="send-btn claude" onclick="openAI('claude')">Open in Claude ↗</button>
+    </div>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="preview-btn" onclick="togglePreview()">Preview prompt</button>
+    </div>
+
+    <div class="prompt-preview" id="prompt-preview">
+      <div class="prompt-preview-header">
+        <span class="prompt-preview-label">Prompt that will be sent to the AI</span>
+        <button class="copy-btn" id="copy-btn" onclick="copyPrompt()">Copy</button>
+      </div>
+      <div class="prompt-text" id="prompt-text"></div>
+    </div>
+
+    <div class="notice">
+      Always read the response carefully before using it. You're responsible for what goes out — the AI helps you draft it, not replace your judgement.
+    </div>
+  </div>
+</div>
+
+<footer>
+  Town Close Financial Planning &nbsp;·&nbsp; <span>Internal tool — not for client distribution</span>
+</footer>
+
+<script>
+  /* =====================================================================
+     SHARED TEAM USAGE COUNTER  —  runs off The Wire's own database
+     ---------------------------------------------------------------------
+     This is the ONLY block that changed from the standalone tool.
+     Instead of localStorage (per-browser) or Supabase, it calls two
+     endpoints in The Wire's own backend, so "This week" and "Total"
+     are the SAME shared number for everyone, on every device.
+
+     The two endpoints (built inside The Wire — see the integration note):
+       POST  {USAGE_LOG_ENDPOINT}   -> records one use  (body: {mode, model})
+       GET   {USAGE_STATS_ENDPOINT} -> returns {week, total}
+
+     The Wire's web app and its API are two separate origins (a static
+     site plus a separate Fastify service - see render.yaml), not one
+     server, so a same-origin relative path would 404. These build an
+     absolute URL to the API instead. Keep the production hostname below
+     in sync with render.yaml's VITE_API_URL if that ever changes.
+  ===================================================================== */
+  const API_ORIGIN = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ? 'http://localhost:3001'
+    : 'https://the-wire-api.onrender.com';
+  const USAGE_LOG_ENDPOINT   = API_ORIGIN + '/api/ai-assistant/usage';
+  const USAGE_STATS_ENDPOINT = API_ORIGIN + '/api/ai-assistant/usage/stats';
+
+  // Record one use, then refresh the display. Never blocks the draft.
+  async function recordUsage(mode, model) {
+    try {
+      await fetch(USAGE_LOG_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ mode: mode || currentMode, model: model || null })
+      });
+    } catch (e) { /* offline / blocked — fail quietly, never block the draft */ }
+    updateCounterDisplay();
+  }
+
+  // Read {week, total} back from the shared table and show them.
+  async function updateCounterDisplay() {
+    try {
+      const res = await fetch(USAGE_STATS_ENDPOINT, { credentials: 'same-origin' });
+      const data = await res.json();
+      document.getElementById('count-week').textContent  = (data && data.week  != null) ? data.week  : 0;
+      document.getElementById('count-total').textContent = (data && data.total != null) ? data.total : 0;
+    } catch (e) { /* leave whatever is on screen */ }
+  }
+
+  document.addEventListener('DOMContentLoaded', updateCounterDisplay);
+
+  let currentMode = 'reply';
+
+  function setMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', (mode === 'reply' && i === 0) || (mode === 'escalate' && i === 1) || (mode === 'internal' && i === 2));
+    });
+    document.getElementById('error-msg').style.display = 'none';
+    document.getElementById('prompt-preview').style.display = 'none';
+    const desc = document.getElementById('mode-desc');
+    if (mode === 'reply') {
+      desc.innerHTML = '<strong>Client reply mode:</strong> AI will draft a warm, clear reply to the client in the Town Close voice — no jargon, no clichés. You review and personalise before sending.';
+    } else if (mode === 'escalate') {
+      desc.innerHTML = '<strong>Escalation mode:</strong> AI will draft a well-framed internal note for the advisor — with context, what\'s needed, and a suggested next step. Not just a forward.';
+    } else {
+      desc.innerHTML = '<strong>Internal comms mode:</strong> Paste your draft internal message. AI will spot what\'s missing and rewrite it so the recipient can act straight away — no back-and-forth needed.';
+    }
+  }
+
+  function buildPrompt(msg) {
+    if (currentMode === 'reply') {
+      return `You are helping the admin team at Town Close Financial Planning (TCFP) draft a reply to a client portal message.
+
+ABOUT TOWN CLOSE — THE VOICE YOU MUST WRITE IN:
+Town Close is a warm, human-centred independent financial planning firm in the UK. The guiding belief: most people don't struggle with money because they lack information — they struggle because they've been alone with uncertainty too long. Our job is to make clients feel less alone with their money.
+Write with these firm principles in mind:
+- Calm is a professional skill. Clients borrow their emotional tone from us. If the reply feels rushed or anxious, they feel rushed and anxious. Be steady.
+- Warm without being sentimental. Human, not corporate. Not stiff, not gushing.
+- Plain English. No jargon unless the client used it first. No clichés (never "I hope this email finds you well").
+- On fees: explain once, clearly. Never defend, over-justify, or apologise for them.
+- Reassurance is a legitimate outcome. If the honest answer is "nothing needs to change" or "you're on track", say so plainly — do NOT manufacture an action or task just to look useful. Sometimes the most valuable reply is calm confirmation.
+
+BEFORE YOU WRITE — think privately through these four questions (this is TCFP's standard reflection method for client messages; do NOT include this analysis in the output, just let it shape the reply):
+1. What might this client be feeling beneath the surface of this message?
+2. What assumptions might I be making that could be wrong?
+3. What reassurance might this client need?
+4. What tone risks should I avoid here?
+
+NOW DRAFT THE REPLY. It should:
+- Be warm, steady, human and concise — no waffle or filler
+- Genuinely address what they asked (and what they may be worried about underneath), not just acknowledge receipt
+- LEAN IN and own the next step rather than lobbing it back. Prefer "I'll call you Thursday to book a time" over "let me know if Thursday works"; prefer "I'll chase this and come back to you by Friday" over "let us know if you need anything". Never leave the client having to chase us.
+- Be honest about what you don't know: if the query needs an adviser or a fact you don't have, say a real person will confirm — don't invent figures, tax treatment, or specifics.
+- Be ready for the team member to review, personalise, and send
+
+Write the reply body only — no subject line, no salutation (e.g. no "Dear [name]"), no sign-off. The team member will add those themselves.
+
+After your draft, add a new line at the end:
+CONFIDENCE: [X%] — one sentence on any assumptions you made or anything you're unsure about (especially any figures or technical points a human must verify).
+If your confidence is below 80%, revise the draft first before responding.
+
+CLIENT MESSAGE:
+"${msg}"`;
+    } else if (currentMode === 'escalate') {
+      return `You are helping the admin team at Town Close Financial Planning (TCFP) handle an incoming client portal message.
+
+Town Close is a warm, human-centred financial planning firm. The guiding belief is that clients should never feel alone with their money, and that calm, steady handling is a professional skill. An escalation is not a forward — it's you doing the anticipatory thinking so the adviser can act straight away.
+
+STEP 1 — TRIAGE FIRST:
+Assess whether the message contains enough context to brief an adviser usefully. Ask: do we know WHY they want what they're asking for, and what outcome they're really after?
+
+If the message is too vague to escalate properly (e.g. "I want a meeting", "can someone call me", "I have a question about my money"):
+- Do NOT draft an escalation.
+- In 1 sentence, say why you can't escalate yet (what context is missing).
+- Draft a short, warm reply to send BACK TO THE CLIENT to gather the missing detail — framed as wanting them to get the right person and the most useful conversation, never as a hurdle.
+- Lean in: offer to call or propose a time rather than leaving it open-ended.
+- Label it clearly: "SUGGESTED REPLY TO CLIENT (to gather more info before escalating):"
+
+If the message HAS enough context to escalate — draft an internal escalation note that:
+- Summarises the client's query in your own words (not a copy-paste)
+- Names the EMOTIONAL temperature, not just the facts: is the client anxious, frustrated, distressed, questioning our advice, or losing trust? This shapes how the adviser opens the conversation.
+- Flags any hard deadline, meeting date, or time pressure explicitly and up front.
+- Flags SENSITIVITY: anything touching a complaint, conflicting or contested prior advice, a possible error on our side, retirement/major-life decisions, or money the client is relying on. These need adviser eyes fast and a careful tone.
+- Gives a clear, specific suggested next step or the single decision the adviser needs to make.
+- Does NOT attempt to answer technical/tax/planning points yourself or invent figures — surface them as things the adviser must address.
+- Is short and scannable.
+- Label it clearly: "ESCALATION NOTE FOR ADVISOR:"
+
+Write message body only in either case — no subject line, no salutation, no sign-off.
+
+After your draft, add a new line at the end:
+CONFIDENCE: [X%] — one sentence on any assumptions or anything you're unsure about.
+If your confidence is below 80%, revise your response first before sending.
+
+CLIENT PORTAL MESSAGE:
+"${msg}"`;
+    } else {
+      return `You are helping a team member at Town Close Financial Planning (TCFP) improve an internal message before they send it, using the firm's "+1 Thinking" discipline.
+
++1 THINKING (the firm's own standard):
+Add the one anticipatory thought that improves clarity or reduces friction — the thing that saves a round of back-and-forth. The rule at TCFP is: standardise the middle, personalise the edges, and never make a colleague chase you for basics. A good internal message — especially one asking a colleague or adviser to act — should let them act, or make one clear decision, without a single follow-up question.
+
+CONSTRAINTS (important — do not break these):
+- Keep it natural, not corporate. This is a note between colleagues, not a memo.
+- Do not add unnecessary length. Shorter is better if it's complete.
+- Do not over-engineer or pad with process. Add the ONE meaningful improvement that matters most, not ten hypotheticals.
+
+STEP 1 — ASSESS THE DRAFT:
+Read it and ask what the recipient would need to act immediately. Common gaps:
+- The purpose or context (why is this happening / why now?)
+- Who is involved — client name, whether it's an individual or a couple
+- Logistics (Zoom vs in-person, which email, date/time, where to log the task)
+- Background the recipient doesn't already hold
+- A clear ask, owner, and — where relevant — a deadline or next checkpoint
+
+STEP 2 — REWRITE IT:
+Rewrite so it's complete and actionable in one read. Where the original is passive ("someone should follow up"), make it own the action ("I'll do X by Friday; can you confirm Y before then?").
+
+Keep it concise and scannable, warm but efficient, and specific — real names, dates, times, formats.
+
+Write the improved message body only — no subject line, no salutation, no sign-off.
+
+After your rewrite, add a new line:
+CONFIDENCE: [X%] — one sentence on any assumptions you made or anything still unclear.
+If your confidence is below 80%, flag exactly what's missing and suggest the team member fills it in before sending, rather than inventing detail.
+
+TEAM MEMBER'S DRAFT:
+"${msg}"`;
+    }
+  }
+
+  function openAI(target) {
+    const msg = document.getElementById('portal-msg').value.trim();
+    const errorEl = document.getElementById('error-msg');
+    errorEl.style.display = 'none';
+    if (!msg) {
+      errorEl.textContent = 'Please paste a client message before continuing.';
+      errorEl.style.display = 'block';
+      document.getElementById('portal-msg').focus();
+      return;
+    }
+    const encoded = encodeURIComponent(buildPrompt(msg));
+    recordUsage(currentMode, target === 'claude' ? 'claude' : 'chatgpt');
+    const url = target === 'claude'
+      ? `https://claude.ai/new?q=${encoded}`
+      : `https://chat.openai.com/?q=${encoded}`;
+    window.open(url, '_blank');
+  }
+
+  function togglePreview() {
+    const msg = document.getElementById('portal-msg').value.trim();
+    const errorEl = document.getElementById('error-msg');
+    errorEl.style.display = 'none';
+    if (!msg) {
+      errorEl.textContent = 'Please paste a client message to preview the prompt.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    const preview = document.getElementById('prompt-preview');
+    if (preview.style.display !== 'block') {
+      document.getElementById('prompt-text').textContent = buildPrompt(msg);
+      preview.style.display = 'block';
+    } else {
+      preview.style.display = 'none';
+    }
+  }
+
+  function copyPrompt() {
+    navigator.clipboard.writeText(document.getElementById('prompt-text').textContent).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+</script>
+
+</body>
+</html>

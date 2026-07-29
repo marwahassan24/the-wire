@@ -36,6 +36,12 @@ export function Layout({ children }: { children: ReactNode }) {
             <Link to="/ops" style={{ fontSize: 15, color: C.inkSoft, textDecoration: "none" }}>
               Operations
             </Link>
+            <Link to="/ai-assistant" style={{ fontSize: 15, color: C.inkSoft, textDecoration: "none" }}>
+              AI Assistant
+            </Link>
+            <Link to="/veve" style={{ fontSize: 15, color: C.inkSoft, textDecoration: "none" }}>
+              PIP-VEVE
+            </Link>
           </nav>
         </div>
         {user && (

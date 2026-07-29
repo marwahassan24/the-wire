@@ -1,0 +1,625 @@
+ <section id="pip-veve-helper" class="pip-app" aria-label="Town Close PIP-VEVE client update helper">
+  <div class="pip-hero">
+    <p class="pip-eyebrow">Town Close Financial Planning</p>
+    <h1>PIP-VEVE update helper</h1>
+    <p class="pip-intro">Add this cycle’s figures, then create a calm, plain-English client update in the Town Close style.</p>
+  </div>
+
+  <div class="pip-card pip-form-card">
+    <div class="pip-section-head">
+      <div>
+        <p class="pip-kicker">This cycle’s figures</p>
+        <h3>What changed this time?</h3>
+      </div>
+      <span class="pip-pill">Client message</span>
+    </div>
+
+    <div class="pip-grid">
+      <div class="pip-field">
+        <label for="cyc">Cycle number</label>
+        <input id="cyc" type="text" value="" placeholder="e.g. 8th" />
+      </div>
+
+      <div class="pip-field">
+        <label for="sale">Sale date</label>
+        <input id="sale" type="text" value="" placeholder="e.g. Tuesday 16 June 2026" />
+      </div>
+
+      <div class="pip-field">
+        <label for="gain">This cycle’s gain</label>
+        <input id="gain" type="text" value="" placeholder="e.g. 3%+" />
+      </div>
+
+      <div class="pip-field">
+        <label for="days">Days in market this cycle</label>
+        <input id="days" type="text" value="" placeholder="e.g. 5" />
+      </div>
+
+      <div class="pip-field">
+        <label for="avg">Average days in market now</label>
+        <input id="avg" type="text" value="" placeholder="e.g. 37" />
+      </div>
+
+      <div class="pip-field">
+        <label for="wait">Wait before this cycle</label>
+        <input id="wait" type="text" value="" placeholder="e.g. 56" />
+      </div>
+
+      <div class="pip-field">
+        <label for="avgwait">Average wait now</label>
+        <input id="avgwait" type="text" value="" placeholder="e.g. 89" />
+      </div>
+
+      <div class="pip-field">
+        <label for="high">Current VEVE high</label>
+        <input id="high" type="text" value="" placeholder="e.g. 107.08" />
+      </div>
+
+      <div class="pip-field">
+        <label for="buy">Next buy-back price</label>
+        <input id="buy" type="text" value="" placeholder="e.g. 103.87" />
+      </div>
+    </div>
+
+    <div class="pip-field pip-field-wide">
+      <label for="extra">Fun facts / anything else this cycle <span>(optional)</span></label>
+      <textarea id="extra" rows="4" placeholder="Optional: any fun facts or notes for this cycle"></textarea>
+    </div>
+  </div>
+
+  <div class="pip-actions" aria-label="PIP-VEVE helper actions">
+    <button id="genBtn" class="pip-btn pip-btn-primary" type="button">
+      <span aria-hidden="true">✦</span>
+      Ask Claude to write it
+    </button>
+
+    <button id="copyBtn" class="pip-btn pip-btn-secondary" type="button">
+      <span aria-hidden="true">↗</span>
+      Copy a starter draft
+    </button>
+  </div>
+
+  <div id="draftWrap" class="pip-card pip-draft-card" hidden>
+    <div class="pip-section-head pip-section-head-compact">
+      <div>
+        <p class="pip-kicker">Starter draft</p>
+        <h3>Edit freely, then send to Louise</h3>
+      </div>
+      <p id="copied" class="pip-copied" aria-live="polite">Copied to clipboard.</p>
+    </div>
+
+    <textarea id="draft" rows="14" aria-label="Starter draft"></textarea>
+  </div>
+
+  <div class="pip-card pip-form-card">
+    <div class="pip-section-head">
+      <div>
+        <p class="pip-kicker">Per-client WhatsApp messages</p>
+        <h3>Short notes for Louise to copy across</h3>
+      </div>
+      <span class="pip-pill">Batch</span>
+    </div>
+
+    <div class="pip-field pip-field-wide" style="margin-top:0">
+      <label for="blog">Blog link for this cycle</label>
+      <textarea id="blog" rows="2" style="width:100%; min-height:auto; padding:11px 13px; border:1px solid var(--tc-line-strong); border-radius:var(--radius-md); font-family:Georgia,'Times New Roman',serif; font-size:16px; line-height:1.5; resize:vertical;" placeholder="Paste this cycle's blog link here"></textarea>
+    </div>
+
+    <div class="pip-field pip-field-wide">
+      <label for="clients">Client list <span>(one per line: Names | latest cycle £ | total to date £)</span></label>
+      <textarea id="clients" rows="8" placeholder="EXAMPLE — replace with real clients:&#10;Firstname and Firstname | 0000 | 00000&#10;Firstname | 0000 | 00000"></textarea>
+    </div>
+
+    <div class="pip-actions" style="margin-top:18px; margin-bottom:0;">
+      <button id="waBtn" class="pip-btn pip-btn-primary" type="button">
+        <span aria-hidden="true">✦</span>
+        Generate all WhatsApp messages
+      </button>
+    </div>
+  </div>
+
+  <div id="waWrap" class="pip-card pip-draft-card" hidden>
+    <div class="pip-section-head pip-section-head-compact">
+      <div>
+        <p class="pip-kicker">WhatsApp batch</p>
+        <h3>One block — Louise copies each into the groups</h3>
+      </div>
+      <p id="waCopied" class="pip-copied" aria-live="polite">Copied to clipboard.</p>
+    </div>
+
+    <textarea id="waOut" rows="22" aria-label="WhatsApp messages" style="width:100%; min-height:420px;"></textarea>
+  </div>
+</section>
+
+<style>
+  #pip-veve-helper {
+    --tc-navy: #183B6B;
+    --tc-navy-dark: #102A4A;
+    --tc-blue: #EAF3FB;
+    --tc-blue-border: #CFE0F2;
+    --tc-pink: #E86AA6;
+    --tc-pink-soft: #F9E8F1;
+    --tc-cream: #FCFBF8;
+    --tc-text: #223047;
+    --tc-text-soft: #5D6878;
+    --tc-text-faint: #7F8896;
+    --tc-line: #D9E1EA;
+    --tc-line-strong: #B9C8D8;
+    --tc-white: #FFFFFF;
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --shadow-soft: 0 10px 30px rgba(24, 59, 107, 0.06);
+
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 20px 0 32px;
+    font-family: Georgia, "Times New Roman", serif;
+    color: var(--tc-text);
+  }
+
+  #pip-veve-helper,
+  #pip-veve-helper * {
+    box-sizing: border-box;
+  }
+
+  #pip-veve-helper .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .pip-hero {
+    text-align: center;
+    padding: 26px 22px 24px;
+    margin-bottom: 16px;
+    border: 1px solid var(--tc-line);
+    border-radius: var(--radius-lg);
+    background:
+      radial-gradient(circle at top left, rgba(232, 106, 166, 0.14), transparent 34%),
+      linear-gradient(to bottom right, var(--tc-white) 0%, var(--tc-cream) 100%);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .pip-eyebrow,
+  .pip-kicker {
+    margin: 0 0 10px;
+    color: var(--tc-pink);
+    font-size: 12px;
+    line-height: 1.2;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .pip-hero h1 {
+    margin: 0 0 10px;
+    color: var(--tc-navy);
+    font-size: clamp(30px, 5vw, 42px);
+    line-height: 1.1;
+    font-weight: 700;
+  }
+
+  .pip-intro {
+    max-width: 610px;
+    margin: 0 auto;
+    color: var(--tc-text-soft);
+    font-size: 17px;
+    line-height: 1.7;
+  }
+
+  .pip-card {
+    background: var(--tc-white);
+    border: 1px solid var(--tc-line);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .pip-form-card {
+    background: linear-gradient(to bottom right, #ffffff 0%, #fcfdff 100%);
+  }
+
+  .pip-section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .pip-section-head-compact {
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .pip-section-head h3 {
+    margin: 0;
+    color: var(--tc-navy);
+    font-size: 23px;
+    line-height: 1.3;
+    font-weight: 700;
+  }
+
+  .pip-pill {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 9px 13px;
+    background: var(--tc-blue);
+    border: 1px solid var(--tc-blue-border);
+    color: var(--tc-navy);
+    font-size: 13px;
+    line-height: 1;
+    font-weight: 700;
+  }
+
+  .pip-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .pip-field {
+    min-width: 0;
+  }
+
+  .pip-field-wide {
+    margin-top: 14px;
+  }
+
+  .pip-field label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--tc-text-soft);
+    font-size: 14px;
+    line-height: 1.45;
+    font-style: italic;
+  }
+
+  .pip-field label span {
+    color: var(--tc-text-faint);
+  }
+
+  .pip-field input,
+  .pip-field textarea,
+  #draft {
+    width: 100%;
+    border: 1px solid var(--tc-line-strong);
+    border-radius: var(--radius-md);
+    background: #fff;
+    color: var(--tc-text);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 16px;
+    line-height: 1.65;
+    transition: 0.18s ease;
+  }
+
+  .pip-field input {
+    min-height: 48px;
+    padding: 11px 13px;
+  }
+
+  .pip-field textarea,
+  #draft {
+    min-height: 130px;
+    padding: 16px;
+    resize: vertical;
+  }
+
+  .pip-field input:focus,
+  .pip-field textarea:focus,
+  #draft:focus {
+    outline: none;
+    border-color: var(--tc-navy);
+    box-shadow: 0 0 0 3px rgba(24, 59, 107, 0.08);
+  }
+
+  .pip-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .pip-btn {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 56px;
+    border-radius: 999px;
+    padding: 15px 20px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    line-height: 1.2;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.18s ease;
+  }
+
+  .pip-btn-primary {
+    border: 1px solid var(--tc-navy);
+    background: var(--tc-navy);
+    color: var(--tc-white);
+  }
+
+  .pip-btn-primary:hover {
+    background: var(--tc-navy-dark);
+    border-color: var(--tc-navy-dark);
+    transform: translateY(-1px);
+  }
+
+  .pip-btn-secondary {
+    border: 1px solid var(--tc-pink);
+    background: var(--tc-pink-soft);
+    color: #8A315B;
+  }
+
+  .pip-btn-secondary:hover {
+    background: var(--tc-pink);
+    color: var(--tc-white);
+    transform: translateY(-1px);
+  }
+
+  .pip-btn:active {
+    transform: scale(0.98);
+  }
+
+  .pip-draft-card {
+    background:
+      linear-gradient(to bottom right, var(--tc-blue) 0%, #F8EFF5 100%);
+  }
+
+  .pip-copied {
+    margin: 0;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(24, 59, 107, 0.08);
+    color: #486F25;
+    font-size: 13px;
+    line-height: 1;
+    font-weight: 700;
+    opacity: 0;
+    transform: translateY(2px);
+    transition: 0.18s ease;
+  }
+
+  .pip-copied.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 760px) {
+    #pip-veve-helper {
+      padding: 14px 0 28px;
+    }
+
+    .pip-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 560px) {
+    .pip-hero,
+    .pip-card {
+      padding: 20px 18px;
+    }
+
+    .pip-section-head {
+      display: block;
+    }
+
+    .pip-pill {
+      margin-top: 12px;
+    }
+
+    .pip-grid,
+    .pip-actions {
+      grid-template-columns: 1fr;
+    }
+
+    .pip-btn {
+      font-size: 16px;
+    }
+  }
+</style>
+
+<script>
+(function(){
+  function el(id){ return document.getElementById(id); }
+  function v(id){ var n = el(id); return n ? (n.value || '').trim() : ''; }
+
+  function buildDraft(){
+    var sale = v('sale') || 'the sale date';
+    var gain = v('gain') || 'a small gain';
+    var days = v('days') || 'a few';
+    var avg = v('avg') || '-';
+    var wait = v('wait') || '-';
+    var avgwait = v('avgwait') || '-';
+    var high = v('high') || '-';
+    var buy = v('buy') || '-';
+    var extra = v('extra');
+
+    var t = '';
+    t += 'A quick update on the PIP-VEVE strategy.\n\n';
+    t += 'On ' + sale + ', all VEVE holdings were sold, with the price having climbed ' + gain + ' from when we went in just ' + days + ' days earlier. That makes this the quickest PIP-VEVE cycle to date.\n\n';
+    t += 'A few figures for interest: the average time in the market is now ' + avg + ' days, and the wait before this cycle was just ' + wait + ' days. The average wait is now ' + avgwait + ' days. There is not much to read into these - the sample size is small - so do treat them as fun facts.\n\n';
+    t += 'Looking ahead, the current VEVE high is ' + high + ', which means we would begin buying back in at ' + buy + '.\n\n';
+    if(extra){ t += extra + '\n\n'; }
+    t += 'As ever, we continue to apply the strategy patiently and mechanically - taking opportunities when they arise, and holding cash when they do not.';
+
+    return t;
+  }
+
+  function buildPrompt(){
+    var L = [
+      'Write a short, warm PIP-VEVE client update in the plain, no-jargon Town Close style. No hype. Lightly understated. End on the idea of applying the strategy patiently and mechanically.',
+      '',
+      'Figures:',
+      '- Cycle completed: ' + (v('cyc') || '(add)'),
+      '- Sale date: ' + (v('sale') || '(add)'),
+      '- Gain this cycle: ' + (v('gain') || '(add)'),
+      '- Days in market this cycle: ' + (v('days') || '(add)'),
+      '- Average days in market now: ' + (v('avg') || '(add)'),
+      '- Wait before this cycle: ' + (v('wait') || '(add)') + ' days',
+      '- Average wait now: ' + (v('avgwait') || '(add)') + ' days',
+      '- Current VEVE high: ' + (v('high') || '(add)'),
+      '- Next buy-back price: ' + (v('buy') || '(add)')
+    ];
+
+    var ex = v('extra');
+    if(ex) L.push('- Also weave in, clearly framed as fun facts rather than signals: ' + ex);
+
+    L.push('');
+    L.push('Keep it concise and friendly. Make clear the small sample means these figures are fun facts, not signals.');
+
+    return L.join('\n');
+  }
+
+  function copyText(text){
+    return new Promise(function(resolve){
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){ resolve(true); }, function(){ resolve(fallbackCopy(text)); });
+        return;
+      }
+      resolve(fallbackCopy(text));
+    });
+  }
+
+  function fallbackCopy(text){
+    var tmp = document.createElement('textarea');
+    tmp.value = text;
+    tmp.setAttribute('readonly', '');
+    tmp.style.position = 'fixed';
+    tmp.style.top = '-9999px';
+    tmp.style.left = '-9999px';
+    document.body.appendChild(tmp);
+    tmp.focus();
+    tmp.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch(e) { ok = false; }
+    document.body.removeChild(tmp);
+    return ok;
+  }
+
+  function showCopied(msg){
+    var c = el('copied');
+    if(!c) return;
+    if(msg) c.textContent = msg;
+    c.classList.add('is-visible');
+    clearTimeout(c._t);
+    c._t = setTimeout(function(){ c.classList.remove('is-visible'); }, 2200);
+  }
+
+  function flash(btn, label){
+    if(!btn) return;
+    if(btn._busy) return;
+    btn._busy = true;
+    var original = btn.innerHTML;
+    btn.innerHTML = label;
+    setTimeout(function(){ btn.innerHTML = original; btn._busy = false; }, 1600);
+  }
+
+  el('genBtn').addEventListener('click', function(){
+    var promptText = buildPrompt();
+
+    if(typeof sendPrompt === 'function'){
+      sendPrompt(promptText);
+      flash(el('genBtn'), 'Sent to Claude');
+      return;
+    }
+
+    var url = 'https://claude.ai/new?q=' + encodeURIComponent(promptText);
+    window.open(url, '_blank', 'noopener');
+    flash(el('genBtn'), 'Opening Claude with your prompt');
+    copyText(promptText);
+  });
+
+  el('copyBtn').addEventListener('click', function(){
+    var draft = buildDraft();
+    var wrap = el('draftWrap');
+    var ta = el('draft');
+
+    ta.value = draft;
+    wrap.hidden = false;
+
+    copyText(draft).then(function(ok){
+      showCopied(ok ? 'Copied to clipboard.' : 'Draft ready - select and copy.');
+      wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      ta.focus();
+      ta.select();
+    });
+  });
+
+  function fmtMoney(raw){
+    var n = (raw || '').replace(/[^0-9.\-]/g, '');
+    if(n === '') return raw.trim();
+    var num = parseFloat(n);
+    if(isNaN(num)) return raw.trim();
+    return num.toLocaleString('en-GB', { maximumFractionDigits: 0 });
+  }
+
+  function buildWhatsApp(){
+    var blog = (el('blog').value || '').replace(/\s+/g, '');
+    var lines = (el('clients').value || '').split('\n');
+    var out = [];
+
+    for(var i=0; i<lines.length; i++){
+      var line = lines[i].trim();
+      if(!line) continue;
+      var parts = line.split('|');
+      var names = (parts[0] || '').trim();
+      var cycle = fmtMoney(parts[1] || '');
+      var total = fmtMoney(parts[2] || '');
+      if(!names) continue;
+
+      var m = '';
+      m += 'A note from Jeremy, thanks, Louise:\n';
+      m += 'Hi ' + names + ', your PIP-VEVE profits from the latest cycle were £' + cycle + ', bringing your total profits to date to £' + total + '.';
+      if(blog){
+        m += '\nHere are some further thoughts on the latest cycle: ' + blog;
+      }
+      out.push(m);
+    }
+
+    return out.join('\n\n———\n\n');
+  }
+
+  function showWaCopied(msg){
+    var c = el('waCopied');
+    if(!c) return;
+    if(msg) c.textContent = msg;
+    c.classList.add('is-visible');
+    clearTimeout(c._t);
+    c._t = setTimeout(function(){ c.classList.remove('is-visible'); }, 2200);
+  }
+
+  el('waBtn').addEventListener('click', function(){
+    var text = buildWhatsApp();
+    var wrap = el('waWrap');
+    var ta = el('waOut');
+
+    ta.value = text;
+    wrap.hidden = false;
+
+    copyText(text).then(function(ok){
+      showWaCopied(ok ? 'All messages copied.' : 'Ready - select and copy.');
+      wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      ta.focus();
+      ta.select();
+    });
+  });
+})();
+</script>
