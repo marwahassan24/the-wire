@@ -259,6 +259,21 @@ async function main() {
 
     const staffPasswordHash = await hashPassword(STAFF_PASSWORD);
 
+    // Account management is admin-only (see accountManager.ts), and none
+    // of the four named staff hold that role - without a seeded admin,
+    // nobody could ever reach the Accounts page on a fresh instance to
+    // grant the role to anyone else. Deliberately not one of the four
+    // named advisers/CMs above: promoting one of them to admin would drop
+    // them out of the adviser/CM picker on the client form. Whoever
+    // actually administers accounts can log in here and, from the
+    // Accounts page, either grant themselves admin on their own named
+    // account or keep using this one - The Wire doesn't presume which.
+    await client.query(
+      `INSERT INTO users (email, password_hash, name, role, active)
+       VALUES ('admin@tcfp.test', $1, 'TCFP Admin', 'admin', true)`,
+      [staffPasswordHash]
+    );
+
     const staffId = new Map<StaffName, number>();
     for (const staff of STAFF) {
       const { rows } = await client.query<{ id: number }>(
@@ -383,14 +398,14 @@ async function main() {
     }
 
     await client.query("COMMIT");
-    console.log(`Seeded ${STAFF.length} staff users and ${CLIENTS.length} TESTCLIENT families.`);
+    console.log(`Seeded ${STAFF.length} staff users, 1 admin account, and ${CLIENTS.length} TESTCLIENT families.`);
     // Never echo the real password into logs on a deployed instance -
     // only the local dev default is safe to print, since it's already
     // public (it's committed in this file).
     const loginHint = process.env.SEED_PASSWORD
       ? "password is whatever SEED_PASSWORD was set to for this run"
       : `password "${DEV_PASSWORD}"`;
-    console.log(`Login: any of ${STAFF.map((s) => s.email).join(", ")} / ${loginHint}`);
+    console.log(`Login: any of ${[...STAFF.map((s) => s.email), "admin@tcfp.test"].join(", ")} / ${loginHint}`);
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;

@@ -8,6 +8,7 @@ declare module "fastify" {
   }
   interface FastifyInstance {
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+    requireAdmin: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }
 }
 
@@ -25,6 +26,17 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
       return;
     }
     request.user = user;
+  });
+
+  // Account management (create/edit/deactivate accounts, reset someone
+  // else's password) is admin-only. Always used alongside authenticate
+  // (either the protected group's hook or an explicit preHandler), so
+  // request.user is already populated by the time this runs.
+  fastify.decorate("requireAdmin", async (request: FastifyRequest, reply: FastifyReply) => {
+    if (request.user?.role !== "admin") {
+      reply.code(403).send({ error: "Admin access required" });
+      return;
+    }
   });
 };
 

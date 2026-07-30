@@ -1,7 +1,8 @@
 import type { FastifyPluginAsync } from "fastify";
-import { pool } from "../db.js";
-import { verifyPassword, verifyAgainstDummyHash } from "../auth/password.js";
+import { pool, withTransaction } from "../db.js";
+import { verifyPassword, verifyAgainstDummyHash, hashPassword } from "../auth/password.js";
 import { createSession, destroySession, SESSION_COOKIE } from "../auth/session.js";
+import { recordAudit } from "../audit.js";
 import { env } from "../env.js";
 
 interface UserRow {
@@ -20,6 +21,18 @@ const loginSchema = {
     properties: {
       email: { type: "string", minLength: 1 },
       password: { type: "string", minLength: 1 },
+    },
+    additionalProperties: false,
+  },
+};
+
+const changePasswordSchema = {
+  body: {
+    type: "object",
+    required: ["currentPassword", "newPassword"],
+    properties: {
+      currentPassword: { type: "string", minLength: 1 },
+      newPassword: { type: "string", minLength: 8 },
     },
     additionalProperties: false,
   },
@@ -87,6 +100,45 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get("/api/auth/me", { preHandler: fastify.authenticate }, async (request) => {
     return request.user;
   });
+
+  // Self-service password change - requires the current password so a
+  // session left open on a shared machine can't silently be used to lock
+  // the real owner out. Distinct from the admin reset-password route
+  // (accountManager.ts), which sets someone else's password directly with
+  // no current-password check, for exactly the "I forgot it" case this
+  // route can't help with.
+  fastify.patch(
+    "/api/auth/me/password",
+    { schema: changePasswordSchema, preHandler: fastify.authenticate },
+    async (request, reply) => {
+      const { currentPassword, newPassword } = request.body as { currentPassword: string; newPassword: string };
+      const userId = request.user!.id;
+
+      const { rows } = await pool.query<{ password_hash: string }>(`SELECT password_hash FROM users WHERE id = $1`, [
+        userId,
+      ]);
+      const currentHash = rows[0]?.password_hash;
+      if (!currentHash || !(await verifyPassword(currentHash, currentPassword))) {
+        reply.code(400).send({ error: "Current password is incorrect." });
+        return;
+      }
+
+      const newHash = await hashPassword(newPassword);
+      await withTransaction(async (tx) => {
+        await tx.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [newHash, userId]);
+        await recordAudit(tx, {
+          userId,
+          entityType: "user",
+          entityId: userId,
+          action: "update",
+          before: null,
+          after: { event: "password_changed_by_user" },
+        });
+      });
+
+      reply.code(204);
+    }
+  );
 };
 
 export default authRoutes;

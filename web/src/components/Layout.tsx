@@ -42,13 +42,18 @@ export function Layout({ children }: { children: ReactNode }) {
             <Link to="/veve" style={{ fontSize: 15, color: C.inkSoft, textDecoration: "none" }}>
               PIP-VEVE
             </Link>
+            {user?.role === "admin" && (
+              <Link to="/accounts" style={{ fontSize: 15, color: C.inkSoft, textDecoration: "none" }}>
+                Accounts
+              </Link>
+            )}
           </nav>
         </div>
         {user && (
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <span style={{ fontSize: C.text.small, color: C.inkSoft }}>
+            <Link to="/profile" style={{ fontSize: C.text.small, color: C.inkSoft, textDecoration: "none" }}>
               {user.name} · {user.role}
-            </span>
+            </Link>
             <Btn tone="ghost" small onClick={() => void logout()}>
               Log out
             </Btn>

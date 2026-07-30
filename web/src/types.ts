@@ -305,6 +305,16 @@ export interface StaffUser {
   role: "adviser" | "client_manager" | "admin";
 }
 
+export interface AccountUser {
+  id: number;
+  email: string;
+  name: string;
+  role: "adviser" | "client_manager" | "admin";
+  active: boolean;
+  created_at: string;
+  last_login_at: string | null;
+}
+
 export interface SearchResult {
   entity_type: "soft_fact" | "point" | "meeting_note" | "portfolio_summary";
   entity_id: number;
