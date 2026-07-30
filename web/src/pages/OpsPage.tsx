@@ -30,9 +30,13 @@ function useDebouncedDays(defaultValue: number): [number, string, (v: string) =>
   return [days, input, setInput];
 }
 
-function Stat({ n, label, tone }: { n: number; label: string; tone?: string }) {
+// title= gives a native hover tooltip - no extra library, works everywhere,
+// and doesn't need its own open/close state. These tiles are terse by
+// design (a number and two words), so the explanation of what's actually
+// being counted has to live somewhere - this is that somewhere.
+function Stat({ n, label, hint, tone }: { n: number; label: string; hint: string; tone?: string }) {
   return (
-    <Card style={{ padding: "20px 16px", textAlign: "center" }}>
+    <Card style={{ padding: "20px 16px", textAlign: "center", cursor: "default" }} title={hint}>
       <div style={{ fontSize: 28, fontWeight: 800, color: tone ?? C.primary, lineHeight: 1.1 }}>{n}</div>
       <div style={{ fontSize: C.text.small, color: C.inkSoft, marginTop: 8 }}>{label}</div>
     </Card>
@@ -108,26 +112,62 @@ export function OpsPage() {
           marginBottom: 36,
         }}
       >
-        <Stat n={stats.reviewsOverdue} label="Reviews overdue" tone={stats.reviewsOverdue ? C.red : undefined} />
-        <Stat n={stats.reviewsDueSoon} label="Reviews next 6 weeks" />
-        <Stat n={stats.reviewsNoDateSet} label="No review date" tone={stats.reviewsNoDateSet ? C.amber : undefined} />
-        <Stat n={stats.liveCases} label="Live cases" />
-        <Stat n={stats.withProvider} label="With provider" tone={C.mauve} />
-        <Stat n={stats.withClient} label="With client" tone={C.mauve} />
-        <Stat n={stats.stalledCases} label={`Stalled ${stalledDays}d+`} tone={stats.stalledCases ? C.red : undefined} />
+        <Stat
+          n={stats.reviewsOverdue}
+          label="Reviews overdue"
+          hint="Clients whose next review date has already passed."
+          tone={stats.reviewsOverdue ? C.red : undefined}
+        />
+        <Stat
+          n={stats.reviewsDueSoon}
+          label="Reviews next 6 weeks"
+          hint="Clients whose next review falls within the next 6 weeks."
+        />
+        <Stat
+          n={stats.reviewsNoDateSet}
+          label="No review date"
+          hint="Clients with no next review date set at all - nothing to chase because nothing's scheduled."
+          tone={stats.reviewsNoDateSet ? C.amber : undefined}
+        />
+        <Stat
+          n={stats.liveCases}
+          label="Live cases"
+          hint="Cases still open - anything not yet at the Completed stage."
+        />
+        <Stat
+          n={stats.withProvider}
+          label="With provider"
+          hint="Open cases currently marked as waiting on a product provider."
+          tone={C.mauve}
+        />
+        <Stat
+          n={stats.withClient}
+          label="With client"
+          hint="Open cases currently marked as waiting on the client."
+          tone={C.mauve}
+        />
+        <Stat
+          n={stats.stalledCases}
+          label={`Stalled ${stalledDays}d+`}
+          hint={`Open cases that haven't changed stage in ${stalledDays} or more days - adjust the "Stalled at" threshold below.`}
+          tone={stats.stalledCases ? C.red : undefined}
+        />
         <Stat
           n={outstandingItems.stats.loa}
           label="LOAs outstanding"
+          hint="Letters of Authority requested but not yet returned, across all clients."
           tone={outstandingItems.stats.loa ? C.amber : undefined}
         />
         <Stat
           n={outstandingItems.stats.signature}
           label="Signatures outstanding"
+          hint="Client signatures requested but not yet returned, across all clients."
           tone={outstandingItems.stats.signature ? C.amber : undefined}
         />
         <Stat
           n={outstandingItems.stats.transfer}
           label="Transfers outstanding"
+          hint="Asset/plan transfers still in progress that haven't completed yet, across all clients."
           tone={outstandingItems.stats.transfer ? C.amber : undefined}
         />
       </div>
