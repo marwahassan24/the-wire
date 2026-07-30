@@ -51,7 +51,8 @@ export function MeetingNoteSection({
     onChange(combined);
   }
 
-  const canStartNew = !creating && (!latest || latest.status === "approved");
+  const draftBlocksNew = !!latest && latest.status === "draft";
+  const canStartNew = !creating && !draftBlocksNew;
 
   return (
     <CollapsibleSection
@@ -69,6 +70,17 @@ export function MeetingNoteSection({
           by the typechecker - the read-only view still reads note.body
           straight from props, so only the edit form was affected). */}
       {latest && <MeetingNoteView key={latest.id} note={latest} onUpdated={insertSorted} />}
+
+      {/* Only one note is ever "latest" per client, so a second draft would
+          have nowhere to live - approving the current one is what makes
+          room. Without this line the "+ New meeting note" button simply
+          vanished with no explanation, which is exactly what got reported
+          as a bug: it's a deliberate constraint, but it wasn't visible. */}
+      {draftBlocksNew && !creating && (
+        <div style={{ fontSize: C.text.small, color: C.inkSoft, marginTop: 16 }}>
+          You can't start another meeting note while one is still a draft. Approve the current draft above first.
+        </div>
+      )}
 
       {canStartNew && (
         <Btn tone="ghost" small onClick={() => setCreating(true)} style={{ marginTop: latest ? 16 : 0 }}>
