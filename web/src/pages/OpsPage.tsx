@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { theme as C } from "../theme.js";
 import { api } from "../api.js";
 import { fmtDate } from "../format.js";
-import type { OpsCase, OpsDashboard, OpsOutstandingItem } from "../types.js";
+import type { OpsCase, OpsDashboard, OpsOutstandingItem, RecentlyDeletedItem } from "../types.js";
 import { Btn, Card, Input, Pill, SectionHeading } from "../components/ui.js";
 import { OUTSTANDING_TYPE_LABEL } from "../components/OutstandingItemsSection.js";
+import { RecentlyDeletedList } from "../components/RecentlyDeletedList.js";
 
 const DEFAULT_QUIET_DAYS = 90;
 const DEFAULT_STALLED_DAYS = 14;
@@ -30,25 +31,64 @@ function useDebouncedDays(defaultValue: number): [number, string, (v: string) =>
   return [days, input, setInput];
 }
 
-// A custom hover tooltip instead of the native title= attribute - title
-// has a browser-controlled delay before it appears (easy to miss on a
-// quick hover) and doesn't show at all on touch devices. This one shows
-// immediately and is actually visible. These tiles are terse by design
-// (a number and two words), so the explanation of what's being counted
-// has to live somewhere - this is that somewhere.
+// A small "i" button toggles the explanation instead of showing it on
+// hover - hover tooltips (even custom ones) don't exist on touch devices
+// and are easy to trigger by accident while scanning the grid. Click
+// away (or the icon again) closes it. Every tile gets a fixed minHeight
+// so the grid stays even regardless of how many lines a label wraps to.
 function Stat({ n, label, hint, tone }: { n: number; label: string; hint: string; tone?: string }) {
-  const [show, setShow] = useState(false);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onClickAway(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onClickAway);
+    return () => document.removeEventListener("mousedown", onClickAway);
+  }, [open]);
+
   return (
-    <div
-      style={{ position: "relative" }}
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}
-    >
-      <Card style={{ padding: "20px 16px", textAlign: "center", cursor: "default" }}>
+    <div ref={ref} style={{ position: "relative" }}>
+      <Card
+        style={{
+          minHeight: 128,
+          padding: "20px 16px",
+          textAlign: "center",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-label={`What does "${label}" mean?`}
+          aria-expanded={open}
+          style={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            width: 18,
+            height: 18,
+            borderRadius: "50%",
+            border: `1px solid ${C.line}`,
+            background: "none",
+            color: C.inkSoft,
+            fontSize: 11,
+            fontWeight: 700,
+            lineHeight: "16px",
+            padding: 0,
+            cursor: "pointer",
+          }}
+        >
+          i
+        </button>
         <div style={{ fontSize: 28, fontWeight: 800, color: tone ?? C.primary, lineHeight: 1.1 }}>{n}</div>
         <div style={{ fontSize: C.text.small, color: C.inkSoft, marginTop: 8 }}>{label}</div>
       </Card>
-      {show && (
+      {open && (
         <div
           style={{
             position: "absolute",
@@ -64,7 +104,6 @@ function Stat({ n, label, hint, tone }: { n: number; label: string; hint: string
             borderRadius: 8,
             boxShadow: "0 6px 20px rgba(0, 0, 0, 0.2)",
             zIndex: 20,
-            pointerEvents: "none",
           }}
         >
           {hint}
@@ -99,6 +138,7 @@ function reviewPill(daysUntil: number) {
 export function OpsPage() {
   const [dashboard, setDashboard] = useState<OpsDashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [deletedItems, setDeletedItems] = useState<RecentlyDeletedItem[] | null>(null);
   const [quietDays, quietDaysInput, setQuietDaysInput] = useDebouncedDays(DEFAULT_QUIET_DAYS);
   const [stalledDays, stalledDaysInput, setStalledDaysInput] = useDebouncedDays(DEFAULT_STALLED_DAYS);
   const [loaDays, loaDaysInput, setLoaDaysInput] = useDebouncedDays(DEFAULT_LOA_DAYS);
@@ -122,6 +162,20 @@ export function OpsPage() {
   useEffect(() => {
     loadDashboard();
   }, [quietDays, stalledDays, loaDays, signatureDays, transferDays]);
+
+  useEffect(() => {
+    api
+      .get<RecentlyDeletedItem[]>("/api/recently-deleted")
+      .then(setDeletedItems)
+      .catch(() => setDeletedItems([]));
+  }, []);
+
+  async function handleRestoreDeleted(item: RecentlyDeletedItem) {
+    await api.post(`/api/recently-deleted/${item.entity_type}/${item.entity_id}/restore`);
+    setDeletedItems((prev) =>
+      prev ? prev.filter((i) => !(i.entity_type === item.entity_type && i.entity_id === item.entity_id)) : prev
+    );
+  }
 
   if (error) return <div style={{ color: C.red, fontSize: C.text.small }}>{error}</div>;
   if (!dashboard) return <div style={{ color: C.inkSoft, fontSize: C.text.small }}>Loading…</div>;
@@ -387,6 +441,19 @@ export function OpsPage() {
             </div>
           ))}
         </div>
+      </Card>
+
+      <SectionHeading>Recently deleted (not tied to a client)</SectionHeading>
+      <div style={{ fontSize: C.text.small, color: C.inkSoft, marginBottom: 16 }}>
+        Everything deletable today belongs to a client - see that client's own "Recently deleted" section to restore
+        it. This list is for anything deleted that isn't tied to one, so it'll normally sit empty.
+      </div>
+      <Card>
+        {deletedItems === null ? (
+          <Empty text="Loading…" />
+        ) : (
+          <RecentlyDeletedList items={deletedItems} onRestore={handleRestoreDeleted} emptyText="Nothing here." />
+        )}
       </Card>
     </div>
   );

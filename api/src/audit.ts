@@ -1,6 +1,6 @@
 import type { PoolClient } from "pg";
 
-export type AuditAction = "create" | "update" | "delete";
+export type AuditAction = "create" | "update" | "delete" | "restore";
 
 export interface AuditParams {
   // Null marks a machine-authored write (e.g. the moneyinfo sync job) -

@@ -315,6 +315,18 @@ export interface AccountUser {
   last_login_at: string | null;
 }
 
+export interface RecentlyDeletedItem {
+  entity_type: "soft_fact" | "contact_log" | "attachment" | "outstanding_item";
+  entity_id: number;
+  client_id: number;
+  section: string;
+  summary: string;
+  meta: string | null;
+  deleted_at: string;
+  deleted_by_id: number | null;
+  deleted_by_name: string | null;
+}
+
 export interface SearchResult {
   entity_type: "soft_fact" | "point" | "meeting_note" | "portfolio_summary";
   entity_id: number;

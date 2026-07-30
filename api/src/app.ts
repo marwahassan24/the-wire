@@ -23,6 +23,7 @@ import contactLogRoutes from "./routes/contactLog.js";
 import outstandingItemsRoutes from "./routes/outstandingItems.js";
 import aiAssistantUsageRoutes from "./routes/aiAssistantUsage.js";
 import accountManagerRoutes from "./routes/accountManager.js";
+import recentlyDeletedRoutes from "./routes/recentlyDeleted.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   // Fastify's default ajv config silently strips unknown body/query fields
@@ -65,6 +66,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     await protectedRoutes.register(contactLogRoutes);
     await protectedRoutes.register(outstandingItemsRoutes);
     await protectedRoutes.register(accountManagerRoutes);
+    await protectedRoutes.register(recentlyDeletedRoutes);
   });
 
   // Public - see aiAssistantUsage.ts for why this stays outside the
