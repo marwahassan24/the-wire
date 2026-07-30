@@ -14,7 +14,8 @@ const TASK_STATUS_LABEL: Record<string, string> = {
   done: "done",
 };
 
-const ACTION_LINE_HINT = 'Lines starting "TCFP:" or "Client:" become draft tasks for a human to sense-check.';
+const ACTION_LINE_HINT =
+  'Lines starting "TCFP:" or "Client:" (bullets are fine) become draft tasks for a human to sense-check.';
 
 // meeting_date comes back from the API as a full ISO timestamp
 // (2026-02-10T00:00:00.000Z), not the plain YYYY-MM-DD an

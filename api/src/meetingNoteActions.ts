@@ -10,10 +10,17 @@ export interface ExtractedAction {
 
 const ACTION_LINE = /^(tcfp|client)\s*:\s*(.+)$/i;
 
+// Next-steps lines are commonly written as a bulleted list ("- TCFP: ...",
+// "• Client: ..."). Strip a leading bullet marker before matching, so the
+// label still has to open the line - this doesn't loosen the match, it
+// just looks past the punctuation a bullet list adds in front of it.
+const BULLET_PREFIX = /^[-*•‣·]+\s*/;
+
 export function extractActionLines(body: string): ExtractedAction[] {
   const actions: ExtractedAction[] = [];
   for (const rawLine of body.split("\n")) {
-    const match = ACTION_LINE.exec(rawLine.trim());
+    const line = rawLine.trim().replace(BULLET_PREFIX, "");
+    const match = ACTION_LINE.exec(line);
     if (!match) continue;
     const text = match[2].trim();
     if (!text) continue;

@@ -31,6 +31,21 @@ test("extracts multiple action lines in document order, ignoring narrative text"
   ]);
 });
 
+test("tolerates a leading bullet marker before the label", () => {
+  const body = "Next steps & actions\n- TCFP: confirm the DD position.\n• Client: send the booklet.\n* TCFP: chase the transfer.";
+  const actions = extractActionLines(body);
+  assert.deepEqual(actions, [
+    { kind: "tcfp", text: "confirm the DD position." },
+    { kind: "client", text: "send the booklet." },
+    { kind: "tcfp", text: "chase the transfer." },
+  ]);
+});
+
+test("a bullet in front of narrative text is still not an action", () => {
+  const actions = extractActionLines("- The client mentioned a house move.\n- We discussed what TCFP can offer.");
+  assert.deepEqual(actions, []);
+});
+
 test("a line that merely mentions 'client' or 'tcfp' without a leading label is not an action", () => {
   const actions = extractActionLines(
     "We discussed what TCFP can offer.\nThe client mentioned a house move.\nClient mentioned nothing else."
