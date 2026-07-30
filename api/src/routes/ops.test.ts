@@ -121,7 +121,7 @@ test("workload reflects this user's own open task and case exactly, since the us
     method: "POST",
     url: `/api/clients/${clientId}/cases`,
     headers: { cookie },
-    payload: { title: "Ops workload case", owner_id: userId },
+    payload: { title: "Ops workload case", stage: "Fact Find", owner_id: userId },
   });
 
   const dashboard = await getDashboard();
@@ -150,7 +150,7 @@ test("soft-deleting the client removes its case from the pipeline and its owner'
     method: "POST",
     url: `/api/clients/${clientId}/cases`,
     headers: { cookie },
-    payload: { title: "Will be orphaned by soft-delete", owner_id: userId },
+    payload: { title: "Will be orphaned by soft-delete", stage: "Fact Find", owner_id: userId },
   });
   const caseId = caseRes.json().id;
 
@@ -255,7 +255,7 @@ test("a case's stalled flag and stalledDays reflect the default 14-day threshold
     method: "POST",
     url: `/api/clients/${clientId}/cases`,
     headers: { cookie },
-    payload: { title: "Stalled threshold case" },
+    payload: { title: "Stalled threshold case", stage: "Fact Find" },
   });
   const caseId = caseRes.json().id;
   await pool.query(`UPDATE cases SET stage_updated_at = now() - interval '20 days' WHERE id = $1`, [caseId]);
@@ -277,7 +277,7 @@ test("stalled_days is configurable and changes both the per-case flag and the st
     method: "POST",
     url: `/api/clients/${clientId}/cases`,
     headers: { cookie },
-    payload: { title: "Configurable stalled case" },
+    payload: { title: "Configurable stalled case", stage: "Fact Find" },
   });
   const caseId = caseRes.json().id;
   await pool.query(`UPDATE cases SET stage_updated_at = now() - interval '20 days' WHERE id = $1`, [caseId]);

@@ -36,7 +36,7 @@ const listQuerySchema = {
 const createCaseSchema = {
   body: {
     type: "object",
-    required: ["title"],
+    required: ["title", "stage"],
     properties: {
       title: { type: "string", minLength: 1 },
       stage: { type: "string", enum: STAGES as unknown as string[] },
@@ -102,12 +102,12 @@ const casesRoutes: FastifyPluginAsync = async (fastify) => {
     const clientId = Number((request.params as { id: string }).id);
     const body = request.body as {
       title: string;
-      stage?: (typeof STAGES)[number];
+      stage: (typeof STAGES)[number];
       waiting_on?: string;
       owner_id?: number;
     };
     const userId = request.user!.id;
-    const stage = body.stage ?? "Fact Find";
+    const stage = body.stage;
 
     try {
       const created = await withTransaction(async (tx) => {

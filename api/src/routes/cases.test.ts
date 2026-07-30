@@ -53,23 +53,44 @@ after(async () => {
 });
 
 async function createCase(body: Record<string, unknown>) {
-  return app.inject({ method: "POST", url: `/api/clients/${clientId}/cases`, headers: { cookie }, payload: body });
+  return app.inject({
+    method: "POST",
+    url: `/api/clients/${clientId}/cases`,
+    headers: { cookie },
+    payload: { stage: "Fact Find", ...body },
+  });
 }
 
 async function patchCase(id: number, body: Record<string, unknown>) {
   return app.inject({ method: "PATCH", url: `/api/cases/${id}`, headers: { cookie }, payload: body });
 }
 
-test("creating a case logs its opening stage as a case_event", async () => {
-  const res = await createCase({ title: "New case" });
+test("creating a case logs its chosen starting stage as a case_event, not just the DB default", async () => {
+  const res = await createCase({ title: "New case", stage: "Suitability Report" });
   assert.equal(res.statusCode, 201);
   const { id, stage } = res.json();
-  assert.equal(stage, "Fact Find");
+  assert.equal(stage, "Suitability Report");
 
   const { rows } = await pool.query(`SELECT from_stage, to_stage FROM case_events WHERE case_id = $1`, [id]);
   assert.equal(rows.length, 1);
   assert.equal(rows[0].from_stage, null);
-  assert.equal(rows[0].to_stage, "Fact Find");
+  assert.equal(rows[0].to_stage, "Suitability Report");
+});
+
+test("creating a case without a stage is rejected - there is no default, it must be chosen", async () => {
+  const res = await app.inject({
+    method: "POST",
+    url: `/api/clients/${clientId}/cases`,
+    headers: { cookie },
+    payload: { title: "No stage given" },
+  });
+  assert.equal(res.statusCode, 400);
+});
+
+test("creating a case can set waiting_on up front instead of leaving it unset", async () => {
+  const res = await createCase({ title: "Waiting on set at creation", waiting_on: "client" });
+  assert.equal(res.statusCode, 201);
+  assert.equal(res.json().waiting_on, "client");
 });
 
 test("changing stage logs a case_event with from/to and the given note", async () => {

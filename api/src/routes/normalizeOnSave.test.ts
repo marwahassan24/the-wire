@@ -173,7 +173,7 @@ test("case title is normalised on create and on edit; case_events note is normal
     method: "POST",
     url: `/api/clients/${clientId}/cases`,
     headers: { cookie },
-    payload: { title: withDash },
+    payload: { title: withDash, stage: "Fact Find" },
   });
   assert.equal(created.json().title, normalized);
 

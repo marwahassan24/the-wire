@@ -11,6 +11,21 @@ const WAITING_LABEL: Record<string, string> = {
   third_party: "third party",
 };
 
+// Mirrors the order of STAGES in api/src/routes/cases.ts - kept as a
+// separate literal rather than fetched, since it's a fixed enum enforced
+// by a DB check constraint, not data that changes at runtime.
+const STAGES = [
+  "Fact Find",
+  "Research",
+  "Recommendation",
+  "Suitability Report",
+  "Compliance Review",
+  "Client Approval",
+  "Submission",
+  "Provider Processing",
+  "Completed",
+] as const;
+
 // GET /api/cases has no client filter (stage/waiting_on/owner only) -
 // fetch everything and keep just this client's. Stage transitions live
 // on the Ops page's pipeline view, not duplicated here - this section is
@@ -77,22 +92,30 @@ function NewCaseForm({
   onCreated: (k: Case) => void;
 }) {
   const [title, setTitle] = useState("");
+  const [stage, setStage] = useState("");
+  const [waitingOn, setWaitingOn] = useState("");
   const [ownerId, setOwnerId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const valid = !!title.trim() && !!stage;
+
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!valid) return;
     setSubmitting(true);
     setError(null);
     try {
       const created = await api.post<Case>(`/api/clients/${clientId}/cases`, {
         title: title.trim(),
+        stage,
+        ...(waitingOn ? { waiting_on: waitingOn } : {}),
         ...(ownerId ? { owner_id: Number(ownerId) } : {}),
       });
       onCreated(created);
       setTitle("");
+      setStage("");
+      setWaitingOn("");
       setOwnerId("");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Couldn't open that case.");
@@ -119,6 +142,20 @@ function NewCaseForm({
         onChange={(e) => setTitle(e.target.value)}
         style={{ flex: "1 1 200px" }}
       />
+      <Select value={stage} onChange={setStage} placeholder="Starting stage">
+        {STAGES.map((s) => (
+          <option key={s} value={s}>
+            {s}
+          </option>
+        ))}
+      </Select>
+      <Select value={waitingOn} onChange={setWaitingOn} placeholder="Waiting on (optional)">
+        {Object.entries(WAITING_LABEL).map(([value, label]) => (
+          <option key={value} value={value}>
+            {label}
+          </option>
+        ))}
+      </Select>
       <Select value={ownerId} onChange={setOwnerId} placeholder="Owner (optional)">
         {staff.map((s) => (
           <option key={s.id} value={s.id}>
@@ -126,7 +163,7 @@ function NewCaseForm({
           </option>
         ))}
       </Select>
-      <Btn type="submit" tone="ink" disabled={submitting || !title.trim()}>
+      <Btn type="submit" tone="ink" disabled={submitting || !valid}>
         Open
       </Btn>
       {error && <div style={{ width: "100%", fontSize: C.text.small, color: C.red }}>{error}</div>}
