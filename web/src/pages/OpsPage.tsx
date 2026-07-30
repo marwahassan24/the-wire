@@ -30,16 +30,47 @@ function useDebouncedDays(defaultValue: number): [number, string, (v: string) =>
   return [days, input, setInput];
 }
 
-// title= gives a native hover tooltip - no extra library, works everywhere,
-// and doesn't need its own open/close state. These tiles are terse by
-// design (a number and two words), so the explanation of what's actually
-// being counted has to live somewhere - this is that somewhere.
+// A custom hover tooltip instead of the native title= attribute - title
+// has a browser-controlled delay before it appears (easy to miss on a
+// quick hover) and doesn't show at all on touch devices. This one shows
+// immediately and is actually visible. These tiles are terse by design
+// (a number and two words), so the explanation of what's being counted
+// has to live somewhere - this is that somewhere.
 function Stat({ n, label, hint, tone }: { n: number; label: string; hint: string; tone?: string }) {
+  const [show, setShow] = useState(false);
   return (
-    <Card style={{ padding: "20px 16px", textAlign: "center", cursor: "default" }} title={hint}>
-      <div style={{ fontSize: 28, fontWeight: 800, color: tone ?? C.primary, lineHeight: 1.1 }}>{n}</div>
-      <div style={{ fontSize: C.text.small, color: C.inkSoft, marginTop: 8 }}>{label}</div>
-    </Card>
+    <div
+      style={{ position: "relative" }}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <Card style={{ padding: "20px 16px", textAlign: "center", cursor: "default" }}>
+        <div style={{ fontSize: 28, fontWeight: 800, color: tone ?? C.primary, lineHeight: 1.1 }}>{n}</div>
+        <div style={{ fontSize: C.text.small, color: C.inkSoft, marginTop: 8 }}>{label}</div>
+      </Card>
+      {show && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "calc(100% + 8px)",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: 220,
+            background: C.ink,
+            color: "#fff",
+            fontSize: C.text.small,
+            lineHeight: 1.4,
+            padding: "8px 12px",
+            borderRadius: 8,
+            boxShadow: "0 6px 20px rgba(0, 0, 0, 0.2)",
+            zIndex: 20,
+            pointerEvents: "none",
+          }}
+        >
+          {hint}
+        </div>
+      )}
+    </div>
   );
 }
 

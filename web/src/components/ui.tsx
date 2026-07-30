@@ -72,21 +72,10 @@ export function Btn({
   );
 }
 
-export function Card({
-  children,
-  style,
-  id,
-  title,
-}: {
-  children: ReactNode;
-  style?: CSSProperties;
-  id?: string;
-  title?: string;
-}) {
+export function Card({ children, style, id }: { children: ReactNode; style?: CSSProperties; id?: string }) {
   return (
     <div
       id={id}
-      title={title}
       style={{
         background: C.card,
         borderRadius: 14,
