@@ -4,27 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Town Close · Portal Reply Tool</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --tc-purple: #2f215f;
-    --tc-purple-deep: #25184f;
-    --tc-pink: #ec4aa0;
-    --tc-pink-hover: #d83c8e;
+    --tc-purple: #342562;
+    --tc-purple-deep: #241a49;
+    --tc-pink: #EB4B98;
+    --tc-pink-hover: #d43a84;
     --tc-white: #ffffff;
-    --tc-offwhite: #fbfaf8;
-    --tc-cream: #f4f1ec;
-    --tc-text: #111018;
-    --tc-muted: #4f4a5f;
-    --tc-soft-purple: #f2edf8;
-    --tc-soft-pink: #fff0f7;
-    --tc-border: #e7e1dc;
-    --tc-success: #2f215f;
-    --tc-success-hover: #25184f;
+    --tc-offwhite: #faf9fd;
+    --tc-cream: #faf9fd;
+    --tc-text: #342562;
+    --tc-muted: #7a72a0;
+    --tc-soft-purple: #efecf8;
+    --tc-soft-pink: #fce9f2;
+    --tc-border: #e4e0f0;
+    --tc-success: #342562;
+    --tc-success-hover: #241a49;
   }
   body {
-    font-family: 'DM Sans', sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: var(--tc-white);
     color: var(--tc-text);
     min-height: 100vh;
@@ -41,7 +40,7 @@
     box-shadow: 0 1px 0 rgba(255,255,255,0.08);
   }
   .logo-text {
-    font-family: 'DM Sans', sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color: white;
     font-size: 1.2rem;
     font-weight: 500;
@@ -97,7 +96,7 @@
   }
   .intro { margin-bottom: 1.75rem; }
   .intro h1 {
-    font-family: 'DM Sans', sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: clamp(2rem, 4vw, 3.1rem);
     font-weight: 500;
     letter-spacing: 0.02em;
@@ -122,7 +121,7 @@
   }
   .chatgpt-info {
     background: var(--tc-soft-purple);
-    border: 1px solid #ddd3ec;
+    border: 1px solid #cdc5e8;
     border-radius: 6px;
     padding: 1rem 1.1rem;
     margin-bottom: 1.5rem;
@@ -144,7 +143,7 @@
     padding: 0.9rem 1rem;
     font-size: 14px;
     font-weight: 500;
-    font-family: 'DM Sans', sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     cursor: pointer;
     border: none;
     background: var(--tc-white);
@@ -161,7 +160,7 @@
     border: 1px solid var(--tc-border);
     padding: 1.85rem;
     margin-bottom: 1.25rem;
-    box-shadow: 0 14px 40px rgba(47,33,95,0.06);
+    box-shadow: 0 14px 40px rgba(52,37,98,0.06);
   }
   .mode-desc {
     font-size: 13.5px;
@@ -188,7 +187,7 @@
     border: 1px solid var(--tc-border);
     border-radius: 6px;
     padding: 1rem 1.1rem;
-    font-family: 'DM Sans', sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: 14px;
     color: var(--tc-text);
     resize: vertical;
@@ -200,18 +199,18 @@
   }
   textarea:focus {
     border-color: var(--tc-pink);
-    box-shadow: 0 0 0 3px rgba(236,74,160,0.12);
+    box-shadow: 0 0 0 3px rgba(235,75,152,0.12);
   }
-  textarea::placeholder { color: #918aa0; }
+  textarea::placeholder { color: #7a72a0; }
   .error-msg {
     font-size: 13px;
-    color: #8c1f58;
+    color: #a11b1b;
     margin-top: 0.75rem;
     display: none;
     padding: 0.75rem 1rem;
-    background: var(--tc-soft-pink);
+    background: #f9eeee;
     border-radius: 6px;
-    border-left: 7px solid var(--tc-pink);
+    border-left: 7px solid #a11b1b;
   }
   .btn-row { display: flex; gap: 10px; margin-top: 1.5rem; flex-wrap: wrap; }
   .send-btn {
@@ -221,7 +220,7 @@
     color: white;
     border: none;
     border-radius: 6px;
-    font-family: 'DM Sans', sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: 14.5px;
     font-weight: 500;
     cursor: pointer;
@@ -240,7 +239,7 @@
     color: var(--tc-purple);
     border: 1px solid var(--tc-purple);
     border-radius: 6px;
-    font-family: 'DM Sans', sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: 13.5px;
     font-weight: 500;
     cursor: pointer;
@@ -272,7 +271,7 @@
   }
   .copy-btn {
     font-size: 12px;
-    font-family: 'DM Sans', sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     padding: 0.35rem 0.9rem;
     border-radius: 4px;
     border: 1px solid var(--tc-purple);
