@@ -24,12 +24,12 @@
   }
   body {
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--tc-white);
+    background: var(--tc-offwhite);
     color: var(--tc-text);
     min-height: 100vh;
   }
   .header {
-    background: var(--tc-purple);
+    background: var(--tc-white);
     padding: 1.15rem 2rem;
     display: flex;
     align-items: center;
@@ -37,11 +37,11 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    box-shadow: 0 1px 0 rgba(255,255,255,0.08);
+    border-bottom: 1px solid var(--tc-border);
   }
   .logo-text {
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: white;
+    color: var(--tc-purple);
     font-size: 1.2rem;
     font-weight: 500;
     letter-spacing: 0.01em;
@@ -51,26 +51,26 @@
     font-size: 10px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.62);
+    color: var(--tc-muted);
     margin-top: 3px;
   }
   .badge {
-    background: var(--tc-white);
+    background: var(--tc-soft-purple);
     color: var(--tc-purple);
     font-size: 11px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     padding: 0.55rem 1rem;
-    border-radius: 6px;
+    border-radius: 20px;
     font-weight: 500;
   }
   .header-right { display: flex; align-items: center; gap: 12px; }
   .usage-counter {
     display: flex;
     gap: 14px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.18);
-    border-radius: 6px;
+    background: var(--tc-offwhite);
+    border: 1px solid var(--tc-border);
+    border-radius: 8px;
     padding: 0.45rem 0.9rem;
   }
   .usage-stat { text-align: center; }
@@ -81,7 +81,7 @@
     line-height: 1.2;
   }
   .usage-stat .lbl {
-    color: rgba(255,255,255,0.62);
+    color: var(--tc-muted);
     font-size: 9px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -97,11 +97,10 @@
   .intro { margin-bottom: 1.75rem; }
   .intro h1 {
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    font-size: clamp(2rem, 4vw, 3.1rem);
-    font-weight: 500;
-    letter-spacing: 0.02em;
+    font-size: 26px;
+    font-weight: 700;
     margin-bottom: 0.85rem;
-    line-height: 1.12;
+    line-height: 1.3;
     color: var(--tc-text);
   }
   .intro h1::after {
@@ -114,15 +113,15 @@
     transform: translateY(0.08em);
   }
   .intro p {
-    font-size: 15.5px;
-    color: var(--tc-text);
+    font-size: 16px;
+    color: var(--tc-muted);
     line-height: 1.72;
     max-width: 610px;
   }
   .chatgpt-info {
     background: var(--tc-soft-purple);
     border: 1px solid #cdc5e8;
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 1rem 1.1rem;
     margin-bottom: 1.5rem;
     font-size: 13.5px;
@@ -132,7 +131,7 @@
   .chatgpt-info strong { font-weight: 500; }
   .tabs {
     display: flex;
-    border-radius: 6px;
+    border-radius: 8px;
     overflow: hidden;
     border: 1px solid var(--tc-purple);
     margin-bottom: 1.5rem;
@@ -155,12 +154,11 @@
   .tab.active { background: var(--tc-purple); color: var(--tc-white); }
   .tab:hover:not(.active) { background: var(--tc-soft-purple); color: var(--tc-purple-deep); }
   .card {
-    background: var(--tc-offwhite);
-    border-radius: 8px;
-    border: 1px solid var(--tc-border);
-    padding: 1.85rem;
+    background: var(--tc-white);
+    border-radius: 14px;
+    padding: 28px;
     margin-bottom: 1.25rem;
-    box-shadow: 0 14px 40px rgba(52,37,98,0.06);
+    box-shadow: 0 1px 2px rgba(52, 37, 98, 0.06), 0 1px 12px rgba(52, 37, 98, 0.04);
   }
   .mode-desc {
     font-size: 13.5px;
@@ -168,8 +166,8 @@
     line-height: 1.65;
     margin-bottom: 1.5rem;
     padding: 0.95rem 1.1rem;
-    background: var(--tc-white);
-    border-radius: 6px;
+    background: var(--tc-offwhite);
+    border-radius: 8px;
     border-left: 7px solid var(--tc-pink);
   }
   .mode-desc strong { color: var(--tc-text); font-weight: 500; }
@@ -185,7 +183,7 @@
   textarea {
     width: 100%;
     border: 1px solid var(--tc-border);
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 1rem 1.1rem;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: 14px;
@@ -209,7 +207,7 @@
     display: none;
     padding: 0.75rem 1rem;
     background: #f9eeee;
-    border-radius: 6px;
+    border-radius: 8px;
     border-left: 7px solid #a11b1b;
   }
   .btn-row { display: flex; gap: 10px; margin-top: 1.5rem; flex-wrap: wrap; }
@@ -219,7 +217,7 @@
     padding: 0.98rem 1.1rem;
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: 14.5px;
     font-weight: 500;
@@ -238,7 +236,7 @@
     background: var(--tc-white);
     color: var(--tc-purple);
     border: 1px solid var(--tc-purple);
-    border-radius: 6px;
+    border-radius: 8px;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: 13.5px;
     font-weight: 500;
@@ -251,7 +249,7 @@
     margin-top: 1rem;
     background: var(--tc-white);
     border: 1px solid var(--tc-border);
-    border-radius: 6px;
+    border-radius: 8px;
     overflow: hidden;
   }
   .prompt-preview-header {
@@ -273,7 +271,7 @@
     font-size: 12px;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     padding: 0.35rem 0.9rem;
-    border-radius: 4px;
+    border-radius: 8px;
     border: 1px solid var(--tc-purple);
     background: var(--tc-white);
     color: var(--tc-purple);
@@ -297,21 +295,22 @@
     color: var(--tc-muted);
     margin-top: 1.1rem;
     padding: 0.85rem 1rem;
-    background: var(--tc-white);
-    border-radius: 6px;
+    background: var(--tc-offwhite);
+    border-radius: 8px;
     border-left: 7px solid var(--tc-pink);
     line-height: 1.55;
   }
   footer {
-    background: var(--tc-purple);
-    color: rgba(255,255,255,0.72);
+    background: transparent;
+    border-top: 1px solid var(--tc-border);
+    color: var(--tc-muted);
     text-align: center;
     padding: 1.25rem;
     font-size: 11px;
     letter-spacing: 0.04em;
     margin-top: 2rem;
   }
-  footer span { color: var(--tc-pink); }
+  footer span { color: var(--tc-purple); font-weight: 600; }
 </style>
 </head>
 <body>
