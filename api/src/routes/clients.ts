@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { pool, withTransaction } from "../db.js";
 import { recordAudit } from "../audit.js";
 import { friendlyConstraintMessage } from "../dbErrors.js";
+import { getClientDaysAliveSummary } from "../daysAlive/clientSummary.js";
 
 export const CLIENT_LIST_COLUMNS = `
   id, moneyinfo_client_id, first_names, surname, dob, dob_2, email, phone,
@@ -295,6 +296,8 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
       return;
     }
 
+    const daysAlive = await getClientDaysAliveSummary(id, clientResult.rows[0].dob);
+
     const tasksByNoteId = new Map<number, unknown[]>();
     for (const task of meetingNoteTasks.rows) {
       const list = tasksByNoteId.get(task.meeting_note_id) ?? [];
@@ -333,6 +336,9 @@ const clientsRoutes: FastifyPluginAsync = async (fastify) => {
         ...item,
         chases: chasesByItemId.get(item.id) ?? [],
       })),
+      // Always computed fresh from dob, never a stored figure - see
+      // daysAlive/clientSummary.ts.
+      daysAlive,
     };
   });
 

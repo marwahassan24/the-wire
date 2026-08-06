@@ -15,6 +15,7 @@ import { AIAssistantPage } from "./pages/AIAssistantPage.js";
 import { VevePage } from "./pages/VevePage.js";
 import { ProfilePage } from "./pages/ProfilePage.js";
 import { AccountManagerPage } from "./pages/AccountManagerPage.js";
+import { DaysAliveAdminPage } from "./pages/DaysAliveAdminPage.js";
 import { theme as C } from "./theme.js";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -151,6 +152,14 @@ export default function App() {
             element={
               <RequireAdmin>
                 <AccountManagerPage />
+              </RequireAdmin>
+            }
+          />
+          <Route
+            path="/days-alive"
+            element={
+              <RequireAdmin>
+                <DaysAliveAdminPage />
               </RequireAdmin>
             }
           />

@@ -151,6 +151,31 @@ export interface Attachment {
   created_at: string;
 }
 
+export interface DaysAliveNextMilestone {
+  days: number;
+  date: string;
+  daysUntil: number;
+}
+
+export interface DaysAliveAlertSummary {
+  id: number;
+  milestoneDays: number;
+  milestoneDate: string;
+  alertDate: string;
+  status: "pending" | "sent" | "failed" | "skipped";
+  sentAt: string | null;
+}
+
+// Always computed fresh from clients.dob when the record is loaded -
+// never a stored figure. Null when the client has no date of birth on
+// file.
+export interface ClientDaysAlive {
+  dateOfBirth: string;
+  daysAlive: number;
+  nextMilestone: DaysAliveNextMilestone | null;
+  alerts: DaysAliveAlertSummary[];
+}
+
 export interface ClientSpine extends ClientSummary {
   softFacts: SoftFact[];
   points: Point[];
@@ -160,6 +185,7 @@ export interface ClientSpine extends ClientSummary {
   contactLog: ContactLog[];
   lastContactDate: string | null;
   outstandingItems: OutstandingItem[];
+  daysAlive: ClientDaysAlive | null;
 }
 
 export interface Task {
@@ -325,6 +351,92 @@ export interface RecentlyDeletedItem {
   deleted_at: string;
   deleted_by_id: number | null;
   deleted_by_name: string | null;
+}
+
+export interface DaysAliveSettings {
+  id: number;
+  enabled: boolean;
+  warningDaysBefore: number;
+  cardLeadDays: number;
+  recipientEmail: string | null;
+}
+
+export interface DaysAliveMilestone {
+  id: number;
+  days: number;
+  enabled: boolean;
+  created_at: string;
+}
+
+export interface DaysAliveAlert {
+  id: number;
+  client_id: number;
+  client_first_names: string;
+  client_surname: string;
+  milestone_days: number;
+  milestone_date: string;
+  alert_date: string;
+  alert_days_before: number;
+  age_years_on_milestone: number;
+  status: "pending" | "sent" | "failed" | "skipped";
+  recipient: string | null;
+  email_subject: string | null;
+  error_message: string | null;
+  created_at: string;
+  sent_at: string | null;
+  job_run_id: number | null;
+}
+
+export interface DaysAliveJobRun {
+  id: number;
+  run_date: string;
+  started_at: string;
+  finished_at: string | null;
+  clients_checked: number;
+  alerts_sent: number;
+  alerts_skipped: number;
+  alerts_failed: number;
+}
+
+export interface DaysAliveMatch {
+  clientId: number;
+  fullName: string;
+  milestoneDays: number;
+  milestoneDate: string;
+  alertDate: string;
+  ageOnMilestone: number;
+}
+
+export interface DaysAlivePreview {
+  fromDate: string;
+  toDate: string;
+  matches: DaysAliveMatch[];
+}
+
+export interface DaysAliveRunResult {
+  jobRunId: number | null;
+  runDate: string;
+  featureEnabled: boolean;
+  clientsChecked: number;
+  clientsSkippedNoDob: number;
+  alertsSent: number;
+  alertsSkipped: number;
+  alertsFailed: number;
+}
+
+export interface DaysAliveDiagnosis {
+  clientId: number;
+  dateOfBirth: string | null;
+  milestoneDays: number;
+  milestoneDate: string | null;
+  alertDate: string | null;
+  evaluationDate: string;
+  daysAliveOnEvaluationDate: number | null;
+  milestoneEnabled: boolean | null;
+  alertRecordExists: boolean;
+  alertStatus: "pending" | "sent" | "failed" | "skipped" | null;
+  emailSent: boolean;
+  failureReason: string | null;
 }
 
 export interface SearchResult {

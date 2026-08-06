@@ -24,6 +24,7 @@ import { CasesSection } from "../components/CasesSection.js";
 import { ContactLogSection } from "../components/ContactLogSection.js";
 import { OutstandingItemsSection } from "../components/OutstandingItemsSection.js";
 import { RecentlyDeletedSection } from "../components/RecentlyDeletedSection.js";
+import { DaysAliveSection } from "../components/DaysAliveSection.js";
 
 // The four Living Document sections stay in this fixed order - human
 // detail first, technical detail last - per doctrine, not preference. The
@@ -40,6 +41,7 @@ const SECTIONS: { id: string; title: string; defaultOpen: boolean }[] = [
   { id: "contact-log", title: "8. Contact log", defaultOpen: false },
   { id: "outstanding-items", title: "9. Outstanding items", defaultOpen: false },
   { id: "recently-deleted", title: "10. Recently deleted", defaultOpen: false },
+  { id: "days-alive", title: "11. Days on the Planet", defaultOpen: false },
 ];
 
 const PREFS_KEY = "the-wire.spine-sections";
@@ -329,6 +331,12 @@ export function ClientSpinePage() {
               open={openSections["recently-deleted"]}
               onToggle={() => toggleSection("recently-deleted")}
               onRestored={refetchClient}
+            />
+
+            <DaysAliveSection
+              daysAlive={client.daysAlive}
+              open={openSections["days-alive"]}
+              onToggle={() => toggleSection("days-alive")}
             />
           </div>
         </div>

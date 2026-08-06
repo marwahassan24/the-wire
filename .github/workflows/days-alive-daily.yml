@@ -1,0 +1,55 @@
+name: Days Alive Daily Check
+
+# Runs "Days on the Planet" milestone alerts once a day - same pattern as
+# backup.yml: checkout, connect to production via PROD_DATABASE_URL, run
+# a tsx script. See api/src/daysAlive/runDailyCheck.ts for what it does.
+#
+# 06:00 UTC is 6am GMT / 7am BST - a single fixed UTC cron, same
+# approach backup.yml already uses rather than a DST-aware dual
+# schedule. The job's own date math is unaffected either way (it works
+# in Europe/London calendar dates, not UTC clock time) - this only
+# controls what wall-clock time the check happens to run at.
+#
+# Requires the same PROD_DATABASE_URL secret backup.yml already needs
+# (Settings -> Secrets and variables -> Actions), plus, for real email
+# delivery:
+#   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM
+#   DAYS_ALIVE_RECIPIENT (optional fallback - the admin Settings page's
+#     recipient email takes priority if set)
+# Without the SMTP secrets, the job still runs and records everything
+# correctly - alerts are recorded as 'failed' with a clear reason
+# instead of pretending to have sent.
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: days-alive-daily
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --workspace api
+
+      - name: Run the daily check
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          NODE_ENV: production
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+          DAYS_ALIVE_RECIPIENT: ${{ secrets.DAYS_ALIVE_RECIPIENT }}
+        run: npx tsx api/src/daysAlive/runDailyCheck.ts

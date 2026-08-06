@@ -47,6 +47,11 @@ export function Layout({ children }: { children: ReactNode }) {
                 Accounts
               </Link>
             )}
+            {user?.role === "admin" && (
+              <Link to="/days-alive" style={{ fontSize: 15, color: C.inkSoft, textDecoration: "none" }}>
+                Days Alive
+              </Link>
+            )}
           </nav>
         </div>
         {user && (
